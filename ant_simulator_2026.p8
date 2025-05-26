@@ -4,6 +4,7 @@ __lua__
 -- ant simulator 2026
 -- by cole cecil
 
+debug = false
 ants = {}
 last_ant_entry = nil
 ant_entry_interval = 5
@@ -33,6 +34,12 @@ function _draw()
  palt(7, true)
 	map(0, 0, 0, 0, 16, 16)
  palt()
+
+ if debug then
+  local hole =
+    get_ant_hole_pos()
+  pset(hole.x, hole.y, 7)
+ end
  
  for ant in all(ants) do
   draw_ant(ant)
@@ -61,16 +68,14 @@ function spawn_ant()
 end
 
 function get_ant_hole_pos()
- return {x=31, y=9}
+ return {x=31, y=8}
 end
 
 function set_ant_dir(ant)
  if ant.dir == nil or time() -
    ant.dir_change_time >
    ant_dir_change_time then
-  if ant.has_food or
-    time() - ant.entry_time >
-    ant_time_limit then
+  if ant_returning(ant) then
    set_ant_home_dir(ant)
   else
    set_ant_explr_dir(ant)
@@ -139,10 +144,14 @@ function move_ant(ant)
  ant.pos.y = pos.y
 end
 
+function ant_returning(ant)
+ return ant.has_food or
+    time() - ant.entry_time >
+    ant_time_limit
+end
+
 function ant_ready_to_exit(ant)
- if ant.has_food or
-   time() - ant.entry_time >
-   ant_time_limit then
+ if ant_returning(ant) then
   local home =
     get_ant_hole_pos()
   local diff = {
@@ -156,10 +165,15 @@ function ant_ready_to_exit(ant)
 end
 
 function draw_ant(ant)
+ local color = 0
+ if debug and
+   ant_returning(ant) then
+  color = 5 
+ end
  pset(
  	ant.pos.x,
  	ant.pos.y,
-  0
+  color
  )
 end
 -->8
