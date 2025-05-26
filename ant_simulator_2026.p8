@@ -5,19 +5,24 @@ __lua__
 -- by cole cecil
 
 ants = {}
-last_ant_time = nil
+last_ant_entry = nil
+ant_entry_interval = 5
 
 function _update()
  if count(ants) == 0 or
-   time() - last_ant_time > 5
+   time() - last_ant_entry > 5
    then
   add(ants, spawn_ant())
-  last_ant_time = time()
+  last_ant_entry = time()
  end
  
- for a in all(ants) do
-  set_ant_dir(a)
-  move_ant(a)
+ for i, ant in ipairs(ants) do
+  if ant_ready_to_exit(ant) then
+   deli(ants, i)
+  else
+   set_ant_dir(ant)
+   move_ant(ant)
+  end
  end
 end
 
@@ -29,8 +34,8 @@ function _draw()
 	map(0, 0, 0, 0, 16, 16)
  palt()
  
- for a in all(ants) do
-  draw_ant(a)
+ for ant in all(ants) do
+  draw_ant(ant)
  end
  
  draw_mouse()
@@ -38,13 +43,18 @@ end
 -->8
 -- ants
 
-speed = .05
+ant_speed = .05
+ant_time_limit = 120
+ant_dir_change_time = 1
+ant_max_angle_change = .3
 
 function spawn_ant()
  local ant = {
   pos = get_ant_hole_pos(),
 		entry_time = time(),
-		dir_change_time = nil
+		dir = nil,
+		dir_change_time = nil,
+		has_food = false
  }
  set_ant_dir(ant)
  return ant
@@ -55,49 +65,94 @@ function get_ant_hole_pos()
 end
 
 function set_ant_dir(ant)
+ if ant.dir == nil or time() -
+   ant.dir_change_time >
+   ant_dir_change_time then
+  if ant.has_food or
+    time() - ant.entry_time >
+    ant_time_limit then
+   set_ant_home_dir(ant)
+  else
+   set_ant_explr_dir(ant)
+  end
+ end
+end
+
+function set_ant_home_dir(ant)
+ local home = get_ant_hole_pos()
+ local angle = atan2(
+  home.x - ant.pos.x,
+  home.y - ant.pos.y
+ )
+ ant.dir = {
+  x = cos(angle),
+  y = sin(angle)
+ }
+ ant.dir_change_time = time()
+end
+
+function set_ant_explr_dir(ant)
  local angle = nil
  if ant.dir == nil then
   angle = rnd()
- elseif time() -
-   ant.dir_change_time > 1 then
+ else
   angle = atan2(ant.dir.x,
     ant.dir.y)
-  angle -= rnd(.3) - .15
+  angle -=
+    rnd(ant_max_angle_change) -
+    (ant_max_angle_change / 2)
  end
  
- if angle != nil then
-  ant.dir = {
-   x = cos(angle),
-   y = sin(angle)
-  }
-  ant.dir_change_time = time()
- end
+ ant.dir = {
+  x = cos(angle),
+  y = sin(angle)
+ }
+ ant.dir_change_time = time()
 end
 
 function move_ant(ant)
  local pos = {}
  pos.x = ant.pos.x +
-   ant.dir.x * speed
+   ant.dir.x * ant_speed
  pos.y = ant.pos.y +
-   ant.dir.y * speed
+   ant.dir.y * ant_speed
  
  local colliding =
    is_collision(pos)
  if colliding then
-  pos.x -= ant.dir.x * speed
+  pos.x -= ant.dir.x * ant_speed
   colliding = is_collision(pos)
   if colliding then
-   pos.x += ant.dir.x * speed
-   pos.y -= ant.dir.y * speed
+   pos.x += ant.dir.x *
+     ant_speed
+   pos.y -= ant.dir.y *
+     ant_speed
    colliding = is_collision(pos)
    if colliding then
-    pos.x -= ant.dir.x * speed
+    pos.x -= ant.dir.x *
+      ant_speed
    end
   end
  end
  
  ant.pos.x = pos.x
  ant.pos.y = pos.y
+end
+
+function ant_ready_to_exit(ant)
+ if ant.has_food or
+   time() - ant.entry_time >
+   ant_time_limit then
+  local home =
+    get_ant_hole_pos()
+  local diff = {
+   x = home.x - ant.pos.x,
+   y = home.y - ant.pos.y
+  }
+  return abs(diff.x) < 1 and
+    abs(diff.y) < 1
+ end
+ return false
 end
 
 function draw_ant(ant)
@@ -114,12 +169,6 @@ function is_collision(pos)
  local tile = mget(pos.x / 8,
    pos.y / 8)
  local flag = fget(tile, 0)
-
- printh("collision: " ..
-   tostr(flag), "log")
- printh("x: " .. pos.x, "log")
- printh("y: " .. pos.y, "log")
-
  return flag
 end
 -->8
