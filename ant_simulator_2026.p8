@@ -7,6 +7,7 @@ __lua__
 debug = false
 ants = {}
 foods = {}
+phrmns = {}
 last_ant_entry = nil
 ant_entry_interval = 5
 
@@ -27,10 +28,14 @@ function _update()
    deli(ants, i)
   else
    ant_try_eating(ant)
+   ant_excrete_phrmn(ant,
+     phrmns)
    set_ant_dir(ant, foods)
    move_ant(ant)
   end
  end
+ 
+ phrmns_evap(phrms)
 end
 
 function _draw()
@@ -46,6 +51,8 @@ function _draw()
     get_ant_hole_pos()
   pset(hole.x - .5, hole.y - .5,
     7)
+  draw_phrmns(phrmns)
+  log_phrmns(phrmns)
  end
 
  for food in all(foods) do
@@ -219,6 +226,13 @@ function ant_try_eating(ant)
  end
 end
 
+function ant_excrete_phrmn(ant,
+  phrmns)
+ if ant.has_food then
+  add_phrmn(phrmns, ant.pos)
+ end
+end
+
 function ant_returning(ant)
  return ant.has_food or
     time() - ant.entry_time >
@@ -290,6 +304,68 @@ end
 function draw_food(food)
  spr(16, food.pos.x - 4,
    food.pos.y - 4)
+end
+-->8
+-- pheromones
+
+phrmn_add_rate = .005
+phrmn_evap_rate = .0001
+
+function add_phrmn(phrmns, pos)
+ local col = phrmns[flr(pos.x)]
+ if col == nil then
+  col = {}
+  phrmns[flr(pos.x)] = col
+ end
+ if col[flr(pos.y)] == nil then
+  col[flr(pos.y)] = 0
+ end
+
+ phrmn = col[flr(pos.y)] +
+   phrmn_add_rate
+ phrmn = min(phrmn, 1)
+ col[flr(pos.y)] = phrmn
+end
+
+function phrmns_evap(phrms)
+ for x, col in pairs(phrmns) do
+  for y, phrmn in pairs(col) do
+   phrmn -= phrmn_evap_rate
+   col[y] = phrmn
+   if phrmn <= 0 then
+    col[y] = nil
+    if count(col) == 0 then
+     phrmns[x] = nil
+    end
+   end
+  end
+ end
+end
+
+function draw_phrmns(phrmns)
+ for x, col in pairs(phrmns) do
+  for y, phrmn in pairs(col) do
+   if phrmn > 0 and
+     phrmn <= .33 then
+    pset(x, y, 5)
+   elseif phrmn > .33 and
+     phrmn <= .66 then
+    pset(x, y, 6)
+   elseif phrmn > .66 then
+    pset(x, y, 7)
+   end
+  end
+ end
+end
+
+function log_phrmns(phrmns)
+ printh("pheromones:", "log")
+ for x, col in pairs(phrmns) do
+  for y, phrmn in pairs(col) do
+   printh(" [" .. x .. "][" ..
+     y .. "]: " .. phrmn, "log")
+  end
+ end
 end
 __gfx__
 00000000011111107111111771111110011111170111111001111110711111100111111744444444000000000000000000000000000000000000000000000000
