@@ -30,7 +30,8 @@ function _update()
    ant_try_eating(ant)
    ant_excrete_phrmn(ant,
      phrmns)
-   set_ant_dir(ant, foods)
+   set_ant_dir(ant, foods,
+     phrmns)
    move_ant(ant)
   end
  end
@@ -71,7 +72,7 @@ end
 ant_speed = .05
 ant_time_limit = 120
 ant_dir_change_time = 1
-ant_max_angle_change = .3
+ant_max_angle_change = .15
 ant_food_detect_dist = 10
 
 function spawn_ant()
@@ -91,12 +92,13 @@ function get_ant_hole_pos()
  return {x=31.5, y=8.5}
 end
 
-function set_ant_dir(ant, foods)
+function set_ant_dir(ant, foods,
+  phrmns)
  if ant.dir == nil or time() -
    ant.dir_change_time >
    ant_dir_change_time then
   if ant_returning(ant) then
-   set_ant_home_dir(ant)
+   set_ant_home_dir(ant, phrmns)
   else
    local food =
      ant.food_detected
@@ -108,18 +110,36 @@ function set_ant_dir(ant, foods)
     ant.food_detected = food
     set_ant_food_dir(ant, food)
    else
-    set_ant_explr_dir(ant)
+    set_ant_explr_dir(ant,
+      phrmns)
    end
   end
  end
 end
 
-function set_ant_home_dir(ant)
+function set_ant_home_dir(ant,
+  phrmns)
+ local ant_angle =
+   atan2(ant.dir.x, ant.dir.y)
+ local phrmn_angle =
+   get_angle_to_phrmn(phrmns,
+   ant.pos, ant_angle)
+ 
  local home = get_ant_hole_pos()
- local angle = atan2(
+ local home_angle = atan2(
   home.x - ant.pos.x,
   home.y - ant.pos.y
  )
+ 
+ local angle = home_angle
+ if phrmn_angle != nil then
+  if debug then
+   printh("detected phrmn " ..
+     "on way to nest", "log")
+  end
+  angle = (phrmn_angle +
+    home_angle) / 2
+ end
  ant.dir = {
   x = cos(angle),
   y = sin(angle)
@@ -140,21 +160,31 @@ function set_ant_food_dir(ant,
  ant.dir_change_time = time()
 end
 
-function set_ant_explr_dir(ant)
- local angle = nil
+function set_ant_explr_dir(ant,
+  phrmns)
+ local ant_angle = nil
  if ant.dir == nil then
-  angle = rnd()
+  ant_angle = rnd()
  else
-  angle = atan2(ant.dir.x,
-    ant.dir.y)
-  angle -=
-    rnd(ant_max_angle_change) -
-    (ant_max_angle_change / 2)
+  ant_angle = atan2(ant.dir.x,
+     ant.dir.y)
+  phrmn_angle =
+    get_angle_to_phrmn(phrmns,
+    ant.pos, ant_angle)
+  if phrmn_angle != nil then
+   printh("detected phrmn " ..
+     "while exploring", "log")
+   ant_angle = phrmn_angle
+  else
+   ant_angle -=
+     rnd(ant_max_angle_change *
+     2) - ant_max_angle_change
+  end
  end
  
  ant.dir = {
-  x = cos(angle),
-  y = sin(angle)
+  x = cos(ant_angle),
+  y = sin(ant_angle)
  }
  ant.dir_change_time = time()
 end
@@ -310,6 +340,8 @@ end
 
 phrmn_add_rate = .005
 phrmn_evap_rate = .0001
+phrmn_detect_dist = 5
+phrmn_detect_angle = .2
 
 function add_phrmn(phrmns, pos)
  local col = phrmns[flr(pos.x)]
@@ -340,6 +372,170 @@ function phrmns_evap(phrms)
    end
   end
  end
+end
+
+function get_angle_to_phrmn(
+  phrmns, pos, look_angle)
+ local tri_verts = {}
+
+ tri_verts.a = pos
+ 
+ local vert_b_angle =
+   look_angle -
+   phrmn_detect_angle
+ local vert_b_dir = {
+  x = cos(vert_b_angle),
+  y = sin(vert_b_angle)
+ }
+ tri_verts.b = {
+  x = pos.x + vert_b_dir.x *
+    phrmn_detect_dist,
+  y = pos.y + vert_b_dir.y *
+    phrmn_detect_dist
+ }
+ 
+ local vert_c_angle =
+   look_angle +
+   phrmn_detect_angle
+ local vert_c_dir = {
+  x = cos(vert_c_angle),
+  y = sin(vert_c_angle)
+ }
+ tri_verts.c = {
+  x = pos.x + vert_c_dir.x *
+    phrmn_detect_dist,
+  y = pos.y + vert_c_dir.y *
+    phrmn_detect_dist
+ }
+ 
+ local bounds = {
+  x1 = min(
+   flr(tri_verts.a.x),
+   flr(tri_verts.b.x),
+   flr(tri_verts.c.x)
+  ),
+  x2 = max(
+   flr(tri_verts.a.x),
+   flr(tri_verts.b.x),
+   flr(tri_verts.c.x)
+  ),
+  y1 = min(
+   flr(tri_verts.a.y),
+   flr(tri_verts.b.y),
+   flr(tri_verts.c.y)
+  ),
+  y2 = max(
+   flr(tri_verts.a.y),
+   flr(tri_verts.b.y),
+   flr(tri_verts.c.y)
+  )
+ }
+ 
+ if debug then
+  printh("detecting phrmn:",
+    "log")
+  printh(" ant pos:", "log")
+  printh("  x = " .. pos.x,
+    "log")
+  printh("  y = " .. pos.y,
+    "log")
+  printh(" ant angle:" ..
+    look_angle, "log")
+  printh(" triangle verts:",
+    "log")
+  printh("  a:", "log")
+  printh("   x = " ..
+    tri_verts.a.x, "log")
+  printh("   y = " ..
+    tri_verts.a.y, "log")
+  printh("  b:", "log")
+  printh("   x = " ..
+    tri_verts.b.x, "log")
+  printh("   y = " ..
+    tri_verts.b.y, "log")
+  printh("  c:", "log")
+  printh("   x = " ..
+    tri_verts.c.x, "log")
+  printh("   y = " ..
+    tri_verts.c.y, "log")
+  printh(" triangle bounds:",
+    "log")
+  printh("  x1 = " .. bounds.x1,
+    "log")
+  printh("  x2 = " .. bounds.x2,
+    "log")
+  printh("  y1 = " .. bounds.y1,
+    "log")
+  printh("  y2 = " .. bounds.y2,
+    "log")
+ end
+ 
+ local phrmn_detected = false
+ local phrmn_dir = {
+  x = 0,
+  y = 0
+ }
+ for i=bounds.x1, bounds.x2 do
+  for j=bounds.y1, bounds.y2 do
+   local phrmn_col = phrmns[i]
+   local phrmn = nil
+   if phrmn_col != nil then
+    phrmn = phrmn_col[j]
+   end
+   if phrmn != nil then
+    local dir = {
+     x = i + .5 - pos.x,
+     y = j + .5 - pos.y
+    }
+    local angle = atan2(
+      dir.x, dir.y)
+    local dist = sqrt(
+     dir.x * dir.x +
+     dir.y * dir.y
+    )
+    if dist < phrmn_detect_dist
+       and angle > (look_angle -
+       phrmn_detect_angle) and
+       angle < (look_angle +
+       phrmn_detect_angle) then
+     phrmn_detected = true
+     local infl = {
+      x = dir.x * phrmn,
+      y = dir.y * phrmn
+     }
+     phrmn_dir.x += infl.x
+     phrmn_dir.y += infl.y
+     
+     if debug then
+      printh(" phrmn detected at:",
+        "log")
+      printh("  x = " .. dir.x,
+        "log")
+      printh("  y = " .. dir.y,
+        "log")
+      printh("  val = " ..
+        phrmn, "log")
+     end
+    end
+   end
+  end
+ end
+ 
+ if not phrmn_detected then
+  if debug then
+   printh(" no phrmn detected",
+     "log")
+  end
+  return nil
+ end
+ 
+ if debug then
+  printh(" final phrmn angle = "
+    .. atan2(phrmn_dir.x,
+    phrmn_dir.y), "log")
+ end
+ return atan2(phrmn_dir.x,
+   phrmn_dir.y)
 end
 
 function draw_phrmns(phrmns)
