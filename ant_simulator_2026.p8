@@ -376,60 +376,53 @@ end
 
 function get_angle_to_phrmn(
   phrmns, pos, look_angle)
- local tri_verts = {}
+ local sense_verts = {}
+ sense_verts[1] = pos
+ local num_verts = 6
+ local angle_incr = (2 *
+   phrmn_detect_angle) /
+   (num_verts - 2)
+ for i = 2, num_verts do
+  local vert_angle =
+    (look_angle -
+    phrmn_detect_angle) +
+    angle_incr * (i - 2)
+  local vert_dir = {
+   x = cos(vert_angle),
+   y = sin(vert_angle)
+  }
+  sense_verts[i] = {
+   x = pos.x + vert_dir.x *
+     phrmn_detect_dist,
+   y = pos.y + vert_dir.y *
+     phrmn_detect_dist
+  }
+ end
 
- tri_verts.a = pos
- 
- local vert_b_angle =
-   look_angle -
-   phrmn_detect_angle
- local vert_b_dir = {
-  x = cos(vert_b_angle),
-  y = sin(vert_b_angle)
- }
- tri_verts.b = {
-  x = pos.x + vert_b_dir.x *
-    phrmn_detect_dist,
-  y = pos.y + vert_b_dir.y *
-    phrmn_detect_dist
- }
- 
- local vert_c_angle =
-   look_angle +
-   phrmn_detect_angle
- local vert_c_dir = {
-  x = cos(vert_c_angle),
-  y = sin(vert_c_angle)
- }
- tri_verts.c = {
-  x = pos.x + vert_c_dir.x *
-    phrmn_detect_dist,
-  y = pos.y + vert_c_dir.y *
-    phrmn_detect_dist
- }
- 
  local bounds = {
-  x1 = min(
-   flr(tri_verts.a.x),
-   flr(tri_verts.b.x),
-   flr(tri_verts.c.x)
-  ),
-  x2 = max(
-   flr(tri_verts.a.x),
-   flr(tri_verts.b.x),
-   flr(tri_verts.c.x)
-  ),
-  y1 = min(
-   flr(tri_verts.a.y),
-   flr(tri_verts.b.y),
-   flr(tri_verts.c.y)
-  ),
-  y2 = max(
-   flr(tri_verts.a.y),
-   flr(tri_verts.b.y),
-   flr(tri_verts.c.y)
-  )
+  x1 = flr(sense_verts[1].x),
+  x2 = flr(sense_verts[1].x),
+  y1 = flr(sense_verts[1].y),
+  y2 = flr(sense_verts[1].y)
  }
+ for i = 2, num_verts do
+  bounds.x1 = min(
+   bounds.x1,
+   flr(sense_verts[i].x)
+  )
+  bounds.x2 = max(
+   bounds.x2,
+   flr(sense_verts[i].x)
+  )
+  bounds.y1 = min(
+   bounds.y1,
+   flr(sense_verts[i].y)
+  )
+  bounds.y2 = max(
+   bounds.y2,
+   flr(sense_verts[i].y)
+  )
+ end
  
  if debug then
   printh("detecting phrmn:",
@@ -441,24 +434,17 @@ function get_angle_to_phrmn(
     "log")
   printh(" ant angle:" ..
     look_angle, "log")
-  printh(" triangle verts:",
+  printh(" sense verts:",
     "log")
-  printh("  a:", "log")
-  printh("   x = " ..
-    tri_verts.a.x, "log")
-  printh("   y = " ..
-    tri_verts.a.y, "log")
-  printh("  b:", "log")
-  printh("   x = " ..
-    tri_verts.b.x, "log")
-  printh("   y = " ..
-    tri_verts.b.y, "log")
-  printh("  c:", "log")
-  printh("   x = " ..
-    tri_verts.c.x, "log")
-  printh("   y = " ..
-    tri_verts.c.y, "log")
-  printh(" triangle bounds:",
+  for i = 1, num_verts do
+    printh("  " .. i .. ":",
+      "log")
+    printh("   x = " ..
+      sense_verts[i].x, "log")
+    printh("   y = " ..
+      sense_verts[i].y, "log")
+  end
+  printh(" sense bounds:",
     "log")
   printh("  x1 = " .. bounds.x1,
     "log")
