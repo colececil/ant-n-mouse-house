@@ -19,7 +19,10 @@ function _update()
  if count(ants) == 0 or
    time() - last_ant_entry > 5
    then
-  add(ants, spawn_ant())
+  add(
+   ants,
+   spawn_ant(foods, phrmns)
+  )
   last_ant_entry = time()
  end
  
@@ -48,9 +51,8 @@ function _draw()
   local hole =
     get_ant_hole_pos()
   pset(hole.x - .5, hole.y - .5,
-    7)
+    14)
   draw_phrmns(phrmns)
-  log_phrmns(phrmns)
  end
 
  for food in all(foods) do
@@ -75,7 +77,8 @@ ant_sense_area_vrtcs = 6
 ant_phrmn_detect_angle = .2
 ant_phrmn_detect_dist = 5
 
-function spawn_ant()
+function spawn_ant(foods,
+  phrmns)
  local ant = {
   pos = get_ant_hole_pos(),
 		entry_time = time(),
@@ -85,7 +88,7 @@ function spawn_ant()
 		has_food = false,
 		sense_area = nil
  }
- set_ant_dir(ant)
+ set_ant_dir(ant, foods, phrmns)
  return ant
 end
 
@@ -193,9 +196,17 @@ end
 
 function set_ant_explr_dir(ant,
   phrmns)
- local ant_angle = nil
+ local ant_angle
+ local phrmn_angle
  if ant.dir == nil then
-  ant_angle = rnd()
+  phrmn_angle =
+    get_angle_to_phrmn(phrmns,
+    ant)
+  if phrmn_angle != nil then
+   ant_angle = phrmn_angle
+  else
+   ant_angle = rnd()
+  end
  else
   set_ant_sense_area(ant)
   phrmn_angle =
@@ -252,7 +263,7 @@ end
 
 function ant_detect_food(ant,
   foods)
- local nearest = nil
+ local nearest
  local nearest_dist =
    ant_food_detect_dist
  for i, food in ipairs(foods) do
@@ -435,6 +446,79 @@ end
 
 function get_angle_to_phrmn(
   phrmns, ant)
+ local bounds
+ local look_angle
+ if ant.dir != nil then
+  bounds =
+    get_phrmn_dtct_bnds(ant)
+  look_angle =
+    atan2(ant.dir.x, ant.dir.y)
+ else
+  bounds =
+    get_spawn_phrmn_dtct_bnds(
+    ant)
+ end
+ 
+ local phrmn_detected = false
+ local phrmn_dir = {
+  x = 0,
+  y = 0
+ }
+ for i=bounds.x1, bounds.x2 do
+  for j=bounds.y1, bounds.y2 do
+   local phrmn_col = phrmns[i]
+   local phrmn
+   if phrmn_col != nil then
+    phrmn = phrmn_col[j]
+   end
+   if phrmn != nil then
+    local dir = {
+     x = i + .5 - ant.pos.x,
+     y = j + .5 - ant.pos.y
+    }
+    local angle = atan2(
+      dir.x, dir.y)
+    local dist = sqrt(
+     dir.x * dir.x +
+     dir.y * dir.y
+    )
+
+    local in_sense_area
+    if look_angle != nil then
+     in_sense_area = dist <
+       ant_phrmn_detect_dist and
+       angle > (look_angle -
+       ant_phrmn_detect_angle)
+       and angle < (look_angle +
+       ant_phrmn_detect_angle)
+    else
+     in_sense_area = dist <
+       ant_phrmn_detect_dist
+    end
+    
+    if in_sense_area then
+     phrmn_detected = true
+     local infl = {
+      x = dir.x * phrmn,
+      y = dir.y * phrmn
+     }
+     phrmn_dir.x += infl.x
+     phrmn_dir.y += infl.y
+    end
+   end
+  end
+ end
+ 
+ if not phrmn_detected then
+  return nil
+ end
+
+ return atan2(phrmn_dir.x,
+   phrmn_dir.y)
+end
+
+function get_phrmn_dtct_bnds(
+  ant)
  local bounds = {
   x1 = flr(ant.sense_area[1].x),
   x2 = flr(ant.sense_area[1].x),
@@ -460,113 +544,77 @@ function get_angle_to_phrmn(
    flr(ant.sense_area[i].y)
   )
  end
- 
- local look_angle =
-   atan2(ant.dir.x, ant.dir.y)
+ return bounds
+end
 
- if debug then
-  printh("detecting phrmn:",
-    "log")
-  printh(" ant pos:", "log")
-  printh("  x = " .. ant.pos.x,
-    "log")
-  printh("  y = " .. ant.pos.y,
-    "log")
-  printh(" ant angle:" ..
-    look_angle, "log")
-  printh(" sense verts:",
-    "log")
-  for i = 1,
-    ant_sense_area_vrtcs do
-   printh("  " .. i .. ":",
-     "log")
-   printh("   x = " ..
-     ant.sense_area[i].x,
-     "log")
-   printh("   y = " ..
-     ant.sense_area[i].y,
-     "log")
-  end
-  printh(" sense bounds:",
-    "log")
-  printh("  x1 = " .. bounds.x1,
-    "log")
-  printh("  x2 = " .. bounds.x2,
-    "log")
-  printh("  y1 = " .. bounds.y1,
-    "log")
-  printh("  y2 = " .. bounds.y2,
-    "log")
- end
- 
- local phrmn_detected = false
- local phrmn_dir = {
-  x = 0,
-  y = 0
+function
+  get_spawn_phrmn_dtct_bnds(ant)
+ local diag_side = sqrt(2) *
+  ant_phrmn_detect_dist
+  
+ local sense_area = {}
+ sense_area[1] = {
+  x = ant.pos.x +
+    ant_phrmn_detect_dist,
+  y = ant.pos.y
  }
- for i=bounds.x1, bounds.x2 do
-  for j=bounds.y1, bounds.y2 do
-   local phrmn_col = phrmns[i]
-   local phrmn = nil
-   if phrmn_col != nil then
-    phrmn = phrmn_col[j]
-   end
-   if phrmn != nil then
-    local dir = {
-     x = i + .5 - ant.pos.x,
-     y = j + .5 - ant.pos.y
-    }
-    local angle = atan2(
-      dir.x, dir.y)
-    local dist = sqrt(
-     dir.x * dir.x +
-     dir.y * dir.y
-    )
-    if dist <
-      ant_phrmn_detect_dist
-      and angle > (look_angle -
-      ant_phrmn_detect_angle)
-      and angle < (look_angle +
-      ant_phrmn_detect_angle)
-      then
-     phrmn_detected = true
-     local infl = {
-      x = dir.x * phrmn,
-      y = dir.y * phrmn
-     }
-     phrmn_dir.x += infl.x
-     phrmn_dir.y += infl.y
-     
-     if debug then
-      printh(" phrmn " ..
-        "detected at:", "log")
-      printh("  x = " .. dir.x,
-        "log")
-      printh("  y = " .. dir.y,
-        "log")
-      printh("  val = " ..
-        phrmn, "log")
-     end
-    end
-   end
-  end
+ sense_area[2] = {
+  x = ant.pos.x + diag_side,
+  y = ant.pos.y + diag_side
+ }
+ sense_area[3] = {
+  x = ant.pos.x,
+  y = ant.pos.y +
+    ant_phrmn_detect_dist
+ }
+ sense_area[4] = {
+  x = ant.pos.x - diag_side,
+  y = ant.pos.y + diag_side
+ }
+ sense_area[5] = {
+  x = ant.pos.x -
+    ant_phrmn_detect_dist,
+  y = ant.pos.y
+ }
+ sense_area[6] = {
+  x = ant.pos.x - diag_side,
+  y = ant.pos.y - diag_side
+ }
+ sense_area[7] = {
+  x = ant.pos.x,
+  y = ant.pos.y -
+    ant_phrmn_detect_dist
+ }
+ sense_area[8] = {
+  x = ant.pos.x + diag_side,
+  y = ant.pos.y - diag_side
+ }
+
+ local bounds = {
+  x1 = flr(sense_area[1].x),
+  x2 = flr(sense_area[1].x),
+  y1 = flr(sense_area[1].y),
+  y2 = flr(sense_area[1].y)
+ }
+ for i = 2, 8 do
+  bounds.x1 = min(
+   bounds.x1,
+   flr(sense_area[i].x)
+  )
+  bounds.x2 = max(
+   bounds.x2,
+   flr(sense_area[i].x)
+  )
+  bounds.y1 = min(
+   bounds.y1,
+   flr(sense_area[i].y)
+  )
+  bounds.y2 = max(
+   bounds.y2,
+   flr(sense_area[i].y)
+  )
  end
- 
- if not phrmn_detected then
-  if debug then
-   printh(" no phrmn detected",
-     "log")
-  end
-  return nil
- end
- 
- if debug then
-  printh(" final phrmn angle = "
-    .. atan2(phrmn_dir.x,
-    phrmn_dir.y), "log")
- end
- return atan2(phrmn_dir.x,
-   phrmn_dir.y)
+ return bounds
 end
 
 function draw_phrmns(phrmns)
@@ -581,16 +629,6 @@ function draw_phrmns(phrmns)
    elseif phrmn > .66 then
     pset(x, y, 7)
    end
-  end
- end
-end
-
-function log_phrmns(phrmns)
- printh("pheromones:", "log")
- for x, col in pairs(phrmns) do
-  for y, phrmn in pairs(col) do
-   printh(" [" .. x .. "][" ..
-     y .. "]: " .. phrmn, "log")
   end
  end
 end
