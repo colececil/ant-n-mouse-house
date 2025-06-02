@@ -12,7 +12,10 @@ last_ant_entry = nil
 ant_entry_interval = 5
 
 function _init()
- add(foods, spawn_food())
+ printh("", "log", true)
+
+ add(foods, spawn_food(1))
+ add(foods, spawn_food(2))
 end
 
 function _update()
@@ -91,7 +94,7 @@ function spawn_ant(foods,
 		dir = nil,
 		dir_change_time = nil,
 		food_detected = nil,
-		has_food = false,
+		food_held = nil,
 		sense_area = nil
  }
  set_ant_dir(ant, foods, phrmns)
@@ -161,9 +164,15 @@ end
 function set_ant_home_dir(ant,
   phrmns)
  set_ant_sense_area(ant)
- local phrmn_angle =
+ local phrmn_angles =
    get_angle_to_phrmn(phrmns,
    ant)
+ local phrmn_angle
+ if count_pairs(phrmn_angles) >
+   0 then
+  phrmn_angle =
+    rnd(phrmn_angles)
+ end
  
  local home = get_ant_hole_pos()
  local home_angle = atan2(
@@ -173,10 +182,6 @@ function set_ant_home_dir(ant,
  
  local angle = home_angle
  if phrmn_angle != nil then
-  if debug then
-   printh("detected phrmn " ..
-     "on way to nest", "log")
-  end
   angle = (phrmn_angle +
     home_angle) / 2
  end
@@ -205,9 +210,23 @@ function set_ant_explr_dir(ant,
  local ant_angle
  local phrmn_angle
  if ant.dir == nil then
-  phrmn_angle =
+  local phrmn_angles =
     get_angle_to_phrmn(phrmns,
     ant)
+  if count_pairs(phrmn_angles) >
+    0 then
+   printh("spawning with " ..
+     "pheromone detected:",
+     "log")
+   local food_id = rnd_key(
+     phrmn_angles)
+   phrmn_angle =
+     phrmn_angles[food_id]
+   printh(" food id = " ..
+     food_id, "log")
+   printh(" angle = " ..
+     phrmn_angle, "log")
+  end
   if phrmn_angle != nil then
    ant_angle = phrmn_angle
   else
@@ -215,12 +234,15 @@ function set_ant_explr_dir(ant,
   end
  else
   set_ant_sense_area(ant)
-  phrmn_angle =
+  local phrmn_angles =
     get_angle_to_phrmn(phrmns,
     ant)
+  if count_pairs(phrmn_angles) >
+    0 then
+   phrmn_angle =
+     rnd(phrmn_angles)
+  end
   if phrmn_angle != nil then
-   printh("detected phrmn " ..
-     "while exploring", "log")
    ant_angle = phrmn_angle
   else
    ant_angle = atan2(ant.dir.x,
@@ -300,7 +322,8 @@ function ant_try_eating(ant)
   if abs(diff.x) < 1 and
     abs(diff.y) < 1 then
    bite_food(ant.food_detected)
-   ant.has_food = true
+   ant.food_held =
+     ant.food_detected.id
    ant.food_detected = nil
   end
  end
@@ -308,13 +331,14 @@ end
 
 function ant_excrete_phrmn(ant,
   phrmns)
- if ant.has_food then
-  add_phrmn(phrmns, ant.pos)
+ if ant.food_held != nil then
+  add_phrmn(phrmns, ant.pos,
+    ant.food_held)
  end
 end
 
 function ant_returning(ant)
- return ant.has_food or
+ return ant.food_held != nil or
     time() - ant.entry_time >
     ant_time_limit
 end
@@ -339,7 +363,7 @@ function draw_ant(ant)
  
  if debug then
   if ant_returning(ant) then
-   if ant.has_food then
+   if ant.food_held != nil then
     color = 9
    else
     color = 5
@@ -383,13 +407,37 @@ function draw_ant(ant)
  end
 end
 -->8
--- collisions
+-- utils
 
 function is_collision(pos)
  local tile = mget(pos.x / 8,
    pos.y / 8)
  local flag = fget(tile, 0)
  return flag
+end
+
+function count_pairs(tbl)
+ local n = 0
+ for k, v in pairs(tbl) do
+  n += 1
+ end
+ return n
+end
+
+function rnd_key(tbl)
+ local len = count_pairs(tbl)
+ if len == 0 then
+  return nil
+ end
+ 
+ local chosen = flr(rnd(len))
+ local i = 0
+ for k, v in pairs(tbl) do
+  if i == chosen then
+   return k
+  end
+  i += 1
+ end
 end
 -->8
 -- mouse
@@ -403,14 +451,26 @@ end
 
 food_bite_size = .05
 
-function spawn_food()
- return {
-  pos = {
-   x = 8 * 8 + 4,
-   y = 2 * 8 + 4
-  },
-  amount = 1
- }
+function spawn_food(num)
+ if num == 1 then
+  return {
+   id = num,
+   pos = {
+    x = 8 * 8 + 4,
+    y = 2 * 8 + 4
+   },
+   amount = 1
+  }
+ elseif num == 2 then
+  return {
+   id = num,
+   pos = {
+    x = 2 * 8 + 4,
+    y = 4 * 8 + 4
+   },
+   amount = 1
+  }
+ end
 end
 
 function bite_food(food)
@@ -427,31 +487,47 @@ end
 phrmn_add_rate = .005
 phrmn_evap_rate = .0001
 
-function add_phrmn(phrmns, pos)
+function add_phrmn(phrmns, pos,
+   food_id)
  local col = phrmns[flr(pos.x)]
  if col == nil then
   col = {}
   phrmns[flr(pos.x)] = col
  end
- if col[flr(pos.y)] == nil then
-  col[flr(pos.y)] = 0
+ 
+ local cell = col[flr(pos.y)]
+ if cell == nil then
+  cell = {}
+  col[flr(pos.y)] = cell
  end
 
- phrmn = col[flr(pos.y)] +
-   phrmn_add_rate
+ local phrmn = cell[food_id]
+ if phrmn == nil then
+  phrmn = 0
+ end
+ 
+ phrmn += phrmn_add_rate
  phrmn = min(phrmn, 1)
- col[flr(pos.y)] = phrmn
+ cell[food_id] = phrmn
 end
 
 function phrmns_evap(phrms)
  for x, col in pairs(phrmns) do
-  for y, phrmn in pairs(col) do
-   phrmn -= phrmn_evap_rate
-   col[y] = phrmn
-   if phrmn <= 0 then
-    col[y] = nil
-    if count(col) == 0 then
-     phrmns[x] = nil
+  for y, cell in pairs(col) do
+   for food_id, phrmn in
+     pairs(cell) do
+    phrmn -= phrmn_evap_rate
+    cell[food_id] = phrmn
+    if phrmn <= 0 then
+     cell[food_id] = nil
+     if count_pairs(cell) == 0
+       then
+      col[y] = nil
+      if count_pairs(col) == 0
+        then
+       phrmns[x] = nil
+      end
+     end
     end
    end
   end
@@ -472,63 +548,75 @@ function get_angle_to_phrmn(
     get_spawn_phrmn_dtct_bnds(
     ant)
  end
- 
- local phrmn_detected = false
- local phrmn_dir = {
-  x = 0,
-  y = 0
- }
+
+ local phrmn_dirs = {}
  for i=bounds.x1, bounds.x2 do
   for j=bounds.y1, bounds.y2 do
    local phrmn_col = phrmns[i]
-   local phrmn
+   local phrmn_cell
    if phrmn_col != nil then
-    phrmn = phrmn_col[j]
+    phrmn_cell = phrmn_col[j]
    end
-   if phrmn != nil then
-    local dir = {
-     x = i + .5 - ant.pos.x,
-     y = j + .5 - ant.pos.y
-    }
-    local angle = atan2(
-      dir.x, dir.y)
-    local dist = sqrt(
-     dir.x * dir.x +
-     dir.y * dir.y
-    )
-
-    local in_sense_area
-    if look_angle != nil then
-     in_sense_area = dist <
-       ant_phrmn_detect_dist and
-       angle > (look_angle -
-       ant_phrmn_detect_angle)
-       and angle < (look_angle +
-       ant_phrmn_detect_angle)
-    else
-     in_sense_area = dist <
-       ant_phrmn_detect_dist
-    end
-    
-    if in_sense_area then
-     phrmn_detected = true
-     local infl = {
-      x = dir.x * phrmn,
-      y = dir.y * phrmn
+   if phrmn_cell != nil then
+    for food_id, phrmn in
+      pairs(phrmn_cell) do
+     local dir = {
+      x = i + .5 - ant.pos.x,
+      y = j + .5 - ant.pos.y
      }
-     phrmn_dir.x += infl.x
-     phrmn_dir.y += infl.y
+     local angle = atan2(
+       dir.x, dir.y)
+     local dist = sqrt(
+      dir.x * dir.x +
+      dir.y * dir.y
+     )
+
+     local in_sense_area
+     if look_angle != nil then
+      in_sense_area = dist <
+        ant_phrmn_detect_dist and
+        angle > (look_angle -
+        ant_phrmn_detect_angle)
+        and angle < (look_angle +
+        ant_phrmn_detect_angle)
+     else
+      in_sense_area = dist <
+        ant_phrmn_detect_dist
+     end
+
+     if in_sense_area then
+      local phrmn_dir =
+        phrmn_dirs[food_id]
+      if phrmn_dir == nil then
+       phrmn_dir = {
+        x = 0,
+        y = 0
+       }
+       phrmn_dirs[food_id] =
+         phrmn_dir
+      end
+
+      local infl = {
+       x = dir.x * phrmn,
+       y = dir.y * phrmn
+      }
+      phrmn_dir.x += infl.x
+      phrmn_dir.y += infl.y
+     end
     end
    end
   end
  end
- 
- if not phrmn_detected then
-  return nil
- end
 
- return atan2(phrmn_dir.x,
-   phrmn_dir.y)
+ local phrmn_angles = {}
+ for food_id, phrmn_dir in
+   pairs(phrmn_dirs) do
+  phrmn_angles[food_id] = atan2(
+   phrmn_dir.x,
+   phrmn_dir.y
+  )
+ end
+ return phrmn_angles
 end
 
 function get_phrmn_dtct_bnds(
@@ -633,18 +721,42 @@ end
 
 function draw_phrmns(phrmns)
  for x, col in pairs(phrmns) do
-  for y, phrmn in pairs(col) do
-   if phrmn > 0 and
-     phrmn <= .33 then
-    pset(x, y, 5)
-   elseif phrmn > .33 and
-     phrmn <= .66 then
-    pset(x, y, 6)
-   elseif phrmn > .66 then
-    pset(x, y, 7)
+  for y, cell in pairs(col) do
+   for food_id, phrmn in
+     pairs(cell) do
+    if phrmn > 0 and
+      phrmn <= .33 then
+     pset(x, y, 4)
+    elseif phrmn > .33 and
+      phrmn <= .66 then
+     pset(x, y, 8)
+    elseif phrmn > .66 then
+     pset(x, y, 10)
+    end
    end
   end
  end
+end
+
+function log_phrmns(phrmns)
+ printh("pheromones: {", "log")
+ for x, col in pairs(phrmns) do
+  printh(" x = " .. x .. ": {",
+    "log")
+  for y, cell in pairs(col) do
+   printh("  y = " .. y ..
+     ": {", "log")
+   for food_id, phrmn in
+     pairs(cell) do
+    printh("   food_id = " ..
+      food_id .. ": " .. phrmn,
+      "log")
+   end
+   printh("  }", "log")
+  end
+  printh(" }", "log")
+ end
+ printh("}", "log")
 end
 __gfx__
 00000000000000000000000000000000000000000000000000000000dd00000000000ddddddddddd555555555555555555555555555555555555555500000000
