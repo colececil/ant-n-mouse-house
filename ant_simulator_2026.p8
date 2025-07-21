@@ -12,8 +12,11 @@ last_ant_entry = nil
 ant_entry_interval = 5
 
 function _init()
- printh("", "log", true)
-
+ if debug then
+  printh("", "log", true)
+ end
+ 
+ init_ant_hole_pos()
  add(foods, spawn_food(1))
  add(foods, spawn_food(2))
 end
@@ -81,6 +84,8 @@ end
 -->8
 -- ants
 
+ant_hole_pos = nil
+
 ant_speed = .05
 ant_time_limit = 120
 ant_dir_change_time = 1
@@ -105,8 +110,48 @@ function spawn_ant(foods,
  return ant
 end
 
+function init_ant_hole_pos()
+ local pos_options = {}
+
+ for y = 52, 95 do
+  add(pos_options, {
+   x = 8,
+   y = y
+  })
+ end
+ for y = 112, 128 do
+  add(pos_options, {
+   x = 8,
+   y = y
+  })
+ end
+ for y = 64, 80 do
+  add(pos_options, {
+   x = 119,
+   y = y
+  })
+ end
+ for x = 58, 100 do
+  add(pos_options, {
+   x = x,
+   y = 16
+  })
+ end
+ for x = 9, 67 do
+  add(pos_options, {
+   x = x,
+   y = 122
+  })
+ end
+ 
+ ant_hole_pos = rnd(pos_options)
+end
+
 function get_ant_hole_pos()
- return {x=31.5, y=16.5}
+ return {
+  x = ant_hole_pos.x,
+  y = ant_hole_pos.y
+ }
 end
 
 function set_ant_sense_area(ant)
@@ -180,7 +225,8 @@ function set_ant_home_dir(ant,
     phrmn_angles[food_id]
  end
  
- local home = get_ant_hole_pos()
+ local home =
+   get_ant_hole_pos()
  local home_angle = atan2(
   home.x - ant.pos.x,
   home.y - ant.pos.y
@@ -1040,7 +1086,7 @@ __gff__
 0000000000000000000001010101010000000000000000000000010101010100000000000000000000000001010000000000000000000000000002010102020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __map__
-0103030405030303030303040503030201030304050303030303030405030e0fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+0103030405030303030303040503030201030304050303030303030405030e0fff01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 1113131415131313131313141513131211060714151313131313131415131e1fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 21ffff18ffffffffffff09080808082221161718191affffffffffffffff2e2fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 21ffffffffffffffffff09080808082221262728292affffffffffffffff3e3fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
