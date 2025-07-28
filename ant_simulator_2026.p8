@@ -1,7 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
--- ant simulator 2026
+-- ant & mouse house
 -- by cole cecil
 
 debug = false
@@ -15,7 +15,7 @@ function _init()
  if debug then
   printh("", "log", true)
  end
- 
+
  init_ant_hole_pos()
  for i = 1, 5 do
   local food = spawn_food(
@@ -107,13 +107,17 @@ function spawn_ant(foods,
   phrmns)
  local ant = {
   pos = get_ant_hole_pos(),
+  waypoints = {
+   get_ant_hole_pos()
+  },
 		entry_time = time(),
 		home_arrival_time = nil,
 		dir = nil,
 		dir_change_time = nil,
 		food_detected = nil,
 		food_held = nil,
-		sense_area = nil
+		sense_area = nil,
+		phrmn_following = nil
  }
  set_ant_dir(ant, foods, phrmns)
  return ant
@@ -206,6 +210,15 @@ function set_ant_dir(ant, foods,
    if food == nil then
     food = ant_detect_food(ant,
       foods)
+    if food != nil and
+      ant.phrmn_following != nil
+      then
+     ant.phrmn_following = nil
+     add(ant.waypoints, {
+      x = ant.pos.x,
+      y = ant.pos.y
+     })
+    end
    end
    if food != nil then
     ant.food_detected = food
@@ -221,31 +234,27 @@ end
 
 function set_ant_home_dir(ant,
   phrmns)
- set_ant_sense_area(ant)
- local phrmn_angles =
-   get_angle_to_phrmn(phrmns,
-   ant)
- local phrmn_angle
- if count_pairs(phrmn_angles) >
-   0 then
-  local food_id = rnd_key(
-     phrmn_angles)
-  phrmn_angle =
-    phrmn_angles[food_id]
+ local waypoints_left =
+   count(ant.waypoints)
+ local waypoint = ant.waypoints[
+  waypoints_left
+ ]
+
+ if waypoints_left > 1 and
+   abs(waypoint.x - ant.pos.x) <
+   1 and
+   abs(waypoint.y - ant.pos.y) <
+   1 then
+  deli(ant.waypoints)
+  waypoint = ant.waypoints[
+   waypoints_left - 1
+  ]
  end
- 
- local home =
-   get_ant_hole_pos()
- local home_angle = atan2(
-  home.x - ant.pos.x,
-  home.y - ant.pos.y
+
+ local angle = atan2(
+  waypoint.x - ant.pos.x,
+  waypoint.y - ant.pos.y
  )
- 
- local angle = home_angle
- if phrmn_angle != nil then
-  angle = (phrmn_angle +
-    home_angle) / 2
- end
  ant.dir = {
   x = cos(angle),
   y = sin(angle)
@@ -276,17 +285,11 @@ function set_ant_explr_dir(ant,
     ant)
   if count_pairs(phrmn_angles) >
     0 then
-   printh("spawning with " ..
-     "pheromone detected:",
-     "log")
    local food_id = rnd_key(
      phrmn_angles)
    phrmn_angle =
      phrmn_angles[food_id]
-   printh(" food id = " ..
-     food_id, "log")
-   printh(" angle = " ..
-     phrmn_angle, "log")
+   ant.phrmn_following = food_id
   end
   if phrmn_angle != nil then
    ant_angle = phrmn_angle
@@ -304,10 +307,27 @@ function set_ant_explr_dir(ant,
      phrmn_angles)
    phrmn_angle =
      phrmn_angles[food_id]
+   if food_id !=
+     ant.phrmn_following then
+    ant.phrmn_following =
+      food_id
+    add(ant.waypoints, {
+     x = ant.pos.x,
+     y = ant.pos.y
+    })
+   end
   end
   if phrmn_angle != nil then
    ant_angle = phrmn_angle
   else
+   if ant.phrmn_following != nil
+     then
+    ant.phrmn_following = nil
+    add(ant.waypoints, {
+     x = ant.pos.x,
+     y = ant.pos.y
+    })
+   end
    ant_angle = atan2(ant.dir.x,
      ant.dir.y)
    ant_angle -=
