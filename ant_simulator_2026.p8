@@ -5,6 +5,7 @@ __lua__
 -- by cole cecil
 
 debug = false
+debug_was_on = false
 ants = {}
 foods = {}
 phrmns = {}
@@ -12,10 +13,6 @@ last_ant_entry = nil
 ant_entry_interval = 5
 
 function _init()
- if debug then
-  printh("", "log", true)
- end
-
  init_ant_hole_pos()
  for i = 1, 5 do
   local food = spawn_food(
@@ -27,6 +24,15 @@ function _init()
 end
 
 function _update()
+ if btnp(🅾️) then
+  debug = not debug
+  if debug then
+   printh("", "log",
+     not debug_was_on)
+   debug_was_on = true
+  end
+ end
+
  for i, food in ipairs(foods) do
   if food.amount <= 0 then
    deli(foods, i)
@@ -70,11 +76,11 @@ function _draw()
 	map(0, 0, 0, 0, 16, 16)
 
  if debug then
+  draw_phrmns(phrmns)
   local hole =
     get_ant_hole_pos()
   pset(hole.x - .5, hole.y - .5,
     14)
-  draw_phrmns(phrmns)
  end
 
  for food in all(foods) do
@@ -93,6 +99,7 @@ end
 -- ants
 
 ant_hole_pos = nil
+ant_current_id = 0
 
 ant_speed = .05
 ant_time_limit = 120
@@ -106,6 +113,7 @@ ant_phrmn_detect_dist = 5
 function spawn_ant(foods,
   phrmns)
  local ant = {
+  id = get_ant_id(),
   pos = get_ant_hole_pos(),
   waypoints = {
    get_ant_hole_pos()
@@ -120,6 +128,15 @@ function spawn_ant(foods,
 		phrmn_following = nil
  }
  set_ant_dir(ant, foods, phrmns)
+
+ if debug then
+  log("ant spawned", {
+   id = ant.id,
+   pos = ant.pos,
+   dir = ant.dir
+  })
+ end
+
  return ant
 end
 
@@ -165,6 +182,15 @@ function get_ant_hole_pos()
   x = ant_hole_pos.x,
   y = ant_hole_pos.y
  }
+end
+
+function get_ant_id()
+ if ant_current_id == 32767 then
+  ant_current_id = 1
+ else
+  ant_current_id += 1
+ end
+ return ant_current_id
 end
 
 function set_ant_sense_area(ant)
@@ -545,6 +571,35 @@ function rnd_key(tbl)
   end
   i += 1
  end
+end
+
+function log(msg, data)
+ local total_msg = 'msg:"' ..
+   msg .. '"'
+ for k, v in pairs(data) do
+  if type(v) == "table" then
+   local tmp_v = ''
+   if v.x != nil and v.y != nil
+     then
+    tmp_v = 'x=' .. tostr(v.x)
+      .. ',y=' .. tostr(v.y)
+   end
+   for vk, vv in pairs(v) do
+    if vk != "x" and vk != "y"
+      then
+     if tmp_v != '' then
+      tmp_v ..= ','
+     end
+     tmp_v ..= vk .. '=' ..
+       tostr(vv)
+    end
+   end
+   v = tmp_v
+  end
+  total_msg ..= ', ' .. k ..
+    ':"' .. tostr(v) .. '"'
+ end
+ printh(total_msg, "log")
 end
 -->8
 -- mouse
