@@ -175,6 +175,8 @@ function init_ant_hole_pos()
  end
  
  ant_hole_pos = rnd(pos_options)
+ ant_hole_pos.x += .5
+ ant_hole_pos.y += .5
 end
 
 function get_ant_hole_pos()
