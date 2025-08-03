@@ -238,14 +238,37 @@ function set_ant_dir(ant, foods,
    if food == nil then
     food = ant_detect_food(ant,
       foods)
-    if food != nil and
-      ant.phrmn_following != nil
-      then
-     ant.phrmn_following = nil
-     add(ant.waypoints, {
-      x = ant.pos.x,
-      y = ant.pos.y
-     })
+    if food != nil then
+     if debug then
+      log("ant detected food", {
+       id = ant.id,
+       pos = ant.pos,
+       dir = ant.dir,
+       food_id = food.id,
+       food_pos = food.pos
+      })
+     end
+     if ant.phrmn_following !=
+       nil then
+      if debug then
+       log("ant added waypoint",
+         {
+          reason = "detected " ..
+            "food while " ..
+            "following " ..
+            "pheromone trail",
+          id = ant.id,
+          waypoint = ant.pos,
+          phrmmn_id =
+            ant.phrmn_following
+         })
+      end
+      ant.phrmn_following = nil
+      add(ant.waypoints, {
+       x = ant.pos.x,
+       y = ant.pos.y
+      })
+     end
     end
    end
    if food != nil then
@@ -273,10 +296,20 @@ function set_ant_home_dir(ant,
    1 and
    abs(waypoint.y - ant.pos.y) <
    1 then
-  deli(ant.waypoints)
+  local old_waypoint =
+    deli(ant.waypoints)
   waypoint = ant.waypoints[
    waypoints_left - 1
   ]
+  if debug then
+   log("ant reached waypoint", {
+    id = ant.id,
+    pos = ant.pos,
+    dir = ant.dir,
+    waypoint = old_waypoint,
+    new_waypoint = waypoint
+   })
+  end
  end
 
  local angle = atan2(
@@ -318,6 +351,16 @@ function set_ant_explr_dir(ant,
    phrmn_angle =
      phrmn_angles[food_id]
    ant.phrmn_following = food_id
+   if debug then
+    log("ant started " ..
+      "following pheromones " ..
+      "while spawning", {
+       id = ant.id,
+       pos = ant.pos,
+       dir = ant.dir,
+       phrmn_id = food_id
+      })
+   end
   end
   if phrmn_angle != nil then
    ant_angle = phrmn_angle
@@ -337,12 +380,36 @@ function set_ant_explr_dir(ant,
      phrmn_angles[food_id]
    if food_id !=
      ant.phrmn_following then
+    if debug then
+     log("ant started " ..
+       "following pheromones", {
+        id = ant.id,
+        pos = ant.pos,
+        dir = ant.dir,
+        phrmn_id = food_id
+       })
+    end
+    if ant.phrmn_following !=
+      nil then
+     if debug then
+      log("ant added waypoint", {
+       reason = "switched to " ..
+         "different " ..
+         "pheromone trail",
+       id = ant.id,
+       waypoint = ant.pos,
+       old_phrmn_id =
+         ant.phrmn_following,
+       new_phrmn_id = food_id
+      })
+     end
+     add(ant.waypoints, {
+      x = ant.pos.x,
+      y = ant.pos.y
+     })
+    end
     ant.phrmn_following =
       food_id
-    add(ant.waypoints, {
-     x = ant.pos.x,
-     y = ant.pos.y
-    })
    end
   end
   if phrmn_angle != nil then
@@ -350,6 +417,16 @@ function set_ant_explr_dir(ant,
   else
    if ant.phrmn_following != nil
      then
+    if debug then
+     log("ant added waypoint", {
+      reason = "pheromone " ..
+        "trail lost",
+      id = ant.id,
+      waypoint = ant.pos,
+      phrmn_id =
+        ant.phrmn_following
+     })
+    end
     ant.phrmn_following = nil
     add(ant.waypoints, {
      x = ant.pos.x,
@@ -474,6 +551,14 @@ function ant_ready_to_exit(ant)
     then
    ant.home_arrival_time =
      time()
+   if debug then
+    log("ant arrived home", {
+     id = ant.id,
+     pos = ant.pos,
+     dir = ant.dir,
+     home = home
+    })
+   end
   end
   return is_home
  end
@@ -498,7 +583,8 @@ function draw_ant(ant)
   
   draw_sense_area =
     ant.sense_area != nil and
-    ant.food_detected == nil
+    ant.food_detected == nil and
+    not ant_returning(ant)
  end
 
  if draw_sense_area then
