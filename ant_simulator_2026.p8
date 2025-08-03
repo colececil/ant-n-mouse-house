@@ -43,6 +43,21 @@ function _update()
        amount = food.amount
       })
    end
+   for ant in all(ants) do
+    if ant.food_detected and
+      ant.food_detected.id ==
+      food.id then
+     log("ant's detected " ..
+       "food was eaten", {
+        id = ant.id,
+        pos = ant.pos,
+        dir = ant.dir,
+        food_id = food.id,
+        food_pos = food.pos
+       })
+     ant.food_detected = nil
+    end
+   end
    deli(foods, i)
   end
  end
