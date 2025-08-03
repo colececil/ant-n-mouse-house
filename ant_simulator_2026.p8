@@ -335,6 +335,10 @@ function set_ant_home_dir(ant,
   end
  end
 
+ optimize_waypoints(ant)
+ waypoint = ant.waypoints[
+   count(ant.waypoints)]
+
  local angle = atan2(
   waypoint.x - ant.pos.x,
   waypoint.y - ant.pos.y
@@ -344,6 +348,45 @@ function set_ant_home_dir(ant,
   y = sin(angle)
  }
  ant.dir_change_time = time()
+end
+
+function optimize_waypoints(ant)
+ local waypoints_left
+ local wp_discarded
+ repeat
+  waypoints_left =
+    count(ant.waypoints)
+  wp_discarded = false
+  wp = ant.waypoints[
+    waypoints_left]
+  home = ant.waypoints[1]
+  if waypoints_left > 1 and
+    distance(wp, home) >
+    distance(ant.pos, home) then
+   if debug then
+    local new_wp = nil
+    if waypoints_left > 2 then
+     new_wp = ant.waypoints[
+       waypoints_left - 1]
+    end
+    log("ant discarded " ..
+      "waypoint that would " ..
+      "take it further from " ..
+      "home", {
+     id = ant.id,
+     pos = ant.pos,
+     dir = ant.dir,
+     old_waypoint = wp,
+     new_waypoint = new_wp
+    })
+   end
+   deli(ant.waypoints)
+   waypoints_left =
+     count(ant.waypoints)
+   wp_discarded = true
+  end
+ until waypoints_left == 1 or
+   not wp_discarded
 end
 
 function set_ant_food_dir(ant,
@@ -655,6 +698,17 @@ function draw_ant(ant)
 end
 -->8
 -- utils
+
+function distance(pos1, pos2)
+ local diff = {
+  x = pos2.x - pos1.x,
+  y = pos2.y - pos1.y
+ }
+ return sqrt(
+  diff.x * diff.x +
+  diff.y * diff.y
+ )
+end
 
 function is_collision(pos)
  local clsn_sprt = mget(
