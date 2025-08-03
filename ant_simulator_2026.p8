@@ -551,6 +551,10 @@ function ant_ready_to_exit(ant)
     then
    ant.home_arrival_time =
      time()
+   ant.pos = {
+    x = home.x,
+    y = home.y
+   }
    if debug then
     log("ant arrived home", {
      id = ant.id,
