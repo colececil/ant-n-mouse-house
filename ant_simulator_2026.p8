@@ -35,6 +35,14 @@ function _update()
 
  for i, food in ipairs(foods) do
   if food.amount <= 0 then
+   if debug then
+    log("food completely eaten",
+      {
+       id = food.id,
+       pos = food.pos,
+       amount = food.amount
+      })
+   end
    deli(foods, i)
   end
  end
@@ -513,6 +521,17 @@ function ant_try_eating(ant)
   }
   if abs(diff.x) < 1 and
     abs(diff.y) < 1 then
+   if debug then
+    log("ant obtained food", {
+     id = ant.id,
+     pos = ant.pos,
+     dir = ant.dir,
+     food_id =
+       ant.food_detected.id,
+     food_pos =
+       ant.food_detected.pos
+    })
+   end
    bite_food(ant.food_detected)
    ant.food_held =
      ant.food_detected.id
@@ -739,15 +758,32 @@ function get_food_pos()
 end
 
 function spawn_food(id, pos)
- return {
+ local food = {
   id = id,
   pos = pos,
   amount = 1
  }
+ if debug then
+  log("food spawned", {
+   id = food.id,
+   pos = food.pos,
+   amount = food.amount
+  })
+ end
+ return food
 end
 
 function bite_food(food)
- food.amount -= food_bite_size
+ local new_amount = food.amount - food_bite_size
+ if debug then
+  log("food bitten", {
+   id = food.id,
+   pos = food.pos,
+   old_amount = food.amount,
+   new_amount = new_amount
+  })
+ end
+ food.amount = new_amount
 end
 
 function draw_food(food)
