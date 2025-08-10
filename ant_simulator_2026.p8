@@ -734,6 +734,28 @@ function is_collision(pos)
  return clsn_color == 0
 end
 
+function is_collision_sprt(pos)
+ local clsn_sprt = mget(
+  flr(pos.x / 8),
+  flr((pos.y / 8) + 16)
+ )
+ local sprt_col = clsn_sprt % 16
+ local sprt_row =
+   flr(clsn_sprt / 16)
+ for i = 0, 7 do
+  for j = 0, 7 do
+   local clsn_color = sget(
+    sprt_col * 8 + i,
+    sprt_row * 8 + j
+   )
+   if clsn_color == 0 then
+    return true
+   end
+  end
+ end
+ return false
+end
+
 function count_pairs(tbl)
  local n = 0
  for k, v in pairs(tbl) do
@@ -836,6 +858,13 @@ function set_mouse_dir()
    x = 0,
    y = 1
   }
+ end
+ if dir != nil and
+   is_collision_sprt({
+    x = mouse.pos.x + dir.x * 8,
+    y = mouse.pos.y + dir.y * 8
+   }) then
+  dir = nil
  end
  if dir != nil then
   mouse.dir = dir
