@@ -6,6 +6,7 @@ __lua__
 
 debug = false
 debug_was_on = false
+mouse = nil
 ants = {}
 foods = {}
 phrmns = {}
@@ -14,6 +15,7 @@ ant_entry_interval = 5
 
 function _init()
  init_ant_hole_pos()
+ init_mouse()
  for i = 1, 5 do
   local food = spawn_food(
    i,
@@ -87,6 +89,9 @@ function _update()
    move_ant(ant)
   end
  end
+
+ set_mouse_dir()
+ move_mouse()
  
  phrmns_evap(phrms)
 end
@@ -784,8 +789,97 @@ end
 -->8
 -- mouse
 
+mouse_speed = 1.5
+
+function init_mouse()
+ mouse = {
+  pos = get_mouse_start_pos(),
+  dir = nil,
+  start_pos = nil,
+  end_pos = nil
+ }
+end
+
+function get_mouse_start_pos()
+ return {
+  x = 8 * 8,
+  y = 2 * 8
+ }
+end
+
+function set_mouse_dir()
+ if mouse.dir != nil then
+  return
+ end
+
+ local dir
+ if btn(⬅️) then
+  dir = {
+   x = -1,
+   y = 0
+  }
+ end
+ if btn(➡️) then
+  dir = {
+   x = 1,
+   y = 0
+  }
+ end
+ if btn(⬆️) then
+  dir = {
+   x = 0,
+   y = -1
+  }
+ end
+ if btn(⬇️) then
+  dir = {
+   x = 0,
+   y = 1
+  }
+ end
+ if dir != nil then
+  mouse.dir = dir
+  mouse.start_pos = {
+   x = mouse.pos.x,
+   y = mouse.pos.y
+  }
+  mouse.end_pos = {
+   x = mouse.pos.x + dir.x * 8,
+   y = mouse.pos.y + dir.y * 8
+  }
+ end
+end
+
+function move_mouse()
+ if mouse.dir == nil then
+  return
+ end
+ 
+ local axis
+ if mouse.dir.x != 0 then
+  axis = "x"
+ else
+  axis = "y"
+ end
+ 
+ mouse.pos[axis] +=
+   mouse.dir[axis] * mouse_speed
+ local d1 = mouse.pos[axis]
+   - mouse.start_pos[axis]
+ local d2 = mouse.end_pos[axis]
+   - mouse.start_pos[axis]
+ if abs(d1) >= abs(d2) then
+  mouse.pos[axis] =
+    mouse.end_pos[axis]
+  mouse.dir = nil
+  mouse.start_pos = nil
+  mouse.end_pos = nil
+ end
+end
+
 function draw_mouse()
- //spr(32, 14 * 8, 2 * 8)
+ spr(209, mouse.pos.x,
+   mouse.pos.y)
 end
 -->8
 -- food
@@ -1243,10 +1337,10 @@ ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777fff55fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777ff5555ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777ff5555ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777fff55fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
