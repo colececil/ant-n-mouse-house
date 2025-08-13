@@ -810,7 +810,10 @@ mouse_speed = 1.5
 function init_mouse()
  mouse = {
   pos = get_mouse_start_pos(),
-  dir = nil,
+  dir = {
+   x = 0,
+   y = 1
+  },
   start_pos = nil,
   end_pos = nil
  }
@@ -833,7 +836,7 @@ function check_mouse_eating()
 end
 
 function set_mouse_dir()
- if mouse.dir != nil then
+ if mouse.end_pos != nil then
   return
  end
 
@@ -883,7 +886,7 @@ function set_mouse_dir()
 end
 
 function move_mouse()
- if mouse.dir == nil then
+ if mouse.end_pos == nil then
   return
  end
  
@@ -903,7 +906,6 @@ function move_mouse()
  if abs(d1) >= abs(d2) then
   mouse.pos[axis] =
     mouse.end_pos[axis]
-  mouse.dir = nil
   mouse.start_pos = nil
   mouse.end_pos = nil
  end
@@ -911,7 +913,8 @@ end
 
 function draw_mouse()
  spr(209, mouse.pos.x,
-   mouse.pos.y)
+   mouse.pos.y, 1, 1,
+   mouse.dir.x == -1)
 end
 -->8
 -- food
@@ -1402,12 +1405,12 @@ ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777fff55fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777ff5555ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777ff5555ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777fff55fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777ffff5fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777fff545ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777ffff55efffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777fff55dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777eff55dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777fee5ddffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
