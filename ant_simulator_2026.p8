@@ -177,7 +177,7 @@ function init_ant_hole_pos()
    y = y
   })
  end
- for y = 112, 128 do
+ for y = 112, 122 do
   add(pos_options, {
    x = 8,
    y = y
