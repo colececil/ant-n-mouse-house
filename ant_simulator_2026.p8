@@ -6,6 +6,8 @@ __lua__
 
 debug = false
 debug_was_on = false
+last_frame_time = 0
+delta_t = 0
 mouse = nil
 ants = {}
 foods = {}
@@ -18,7 +20,11 @@ function _init()
  init_mouse()
 end
 
-function _update()
+function _update60()
+ delta_t = time() -
+   last_frame_time
+ last_frame_time = time()
+
  if btnp(🅾️) then
   debug = not debug
   if debug then
@@ -123,7 +129,7 @@ end
 ant_hole_pos = nil
 ant_current_id = 0
 
-ant_speed = .05
+ant_speed = 1.5
 ant_time_limit = 120
 ant_dir_change_time = 1
 ant_max_angle_change = .15
@@ -517,27 +523,27 @@ function move_ant(ant)
  if ant_ready_to_exit(ant) then
   return
  end
+ 
+ local dist = ant_speed *
+   delta_t
 
  local pos = {}
  pos.x = ant.pos.x +
-   ant.dir.x * ant_speed
+   ant.dir.x * dist
  pos.y = ant.pos.y +
-   ant.dir.y * ant_speed
+   ant.dir.y * dist
  
  local colliding =
    is_collision(pos)
  if colliding then
-  pos.x -= ant.dir.x * ant_speed
+  pos.x -= ant.dir.x * dist
   colliding = is_collision(pos)
   if colliding then
-   pos.x += ant.dir.x *
-     ant_speed
-   pos.y -= ant.dir.y *
-     ant_speed
+   pos.x += ant.dir.x * dist
+   pos.y -= ant.dir.y * dist
    colliding = is_collision(pos)
    if colliding then
-    pos.x -= ant.dir.x *
-      ant_speed
+    pos.x -= ant.dir.x * dist
    end
   end
  end
@@ -805,7 +811,7 @@ end
 -->8
 -- mouse
 
-mouse_speed = 1.5
+mouse_speed = 45
 
 function init_mouse()
  mouse = {
@@ -899,6 +905,7 @@ function move_mouse()
  
  mouse.pos[axis] +=
    mouse.dir[axis] * mouse_speed
+   * delta_t
  local d1 = mouse.pos[axis]
    - mouse.start_pos[axis]
  local d2 = mouse.end_pos[axis]
@@ -1025,8 +1032,8 @@ end
 -->8
 -- pheromones
 
-phrmn_add_rate = .005
-phrmn_evap_rate = .0001
+phrmn_add_rate = .15
+phrmn_evap_rate = .003
 
 function add_phrmn(phrmns, pos,
    food_id)
@@ -1047,7 +1054,8 @@ function add_phrmn(phrmns, pos,
   phrmn = 0
  end
  
- phrmn += phrmn_add_rate
+ phrmn += phrmn_add_rate *
+   delta_t
  phrmn = min(phrmn, 1)
  cell[food_id] = phrmn
 end
@@ -1057,7 +1065,8 @@ function phrmns_evap(phrms)
   for y, cell in pairs(col) do
    for food_id, phrmn in
      pairs(cell) do
-    phrmn -= phrmn_evap_rate
+    phrmn -= phrmn_evap_rate *
+      delta_t
     cell[food_id] = phrmn
     if phrmn <= 0 then
      cell[food_id] = nil
