@@ -812,6 +812,10 @@ end
 -- mouse
 
 mouse_speed = 45
+mouse_move_prgrss = false
+mouse_anim = nil
+mouse_anim_pos = 0
+mouse_anim_time = .1
 
 function init_mouse()
  mouse = {
@@ -842,22 +846,26 @@ function check_mouse_eating()
 end
 
 function set_mouse_dir()
- if mouse.end_pos != nil then
+ if mouse.end_pos != nil and
+    not mouse_move_prgrss then
   return
  end
 
  local dir
+ local anim
  if btn(⬅️) then
   dir = {
    x = -1,
    y = 0
   }
+  anim = "run_horiz"
  end
  if btn(➡️) then
   dir = {
    x = 1,
    y = 0
   }
+  anim = "run_horiz"
  end
  if btn(⬆️) then
   dir = {
@@ -871,24 +879,46 @@ function set_mouse_dir()
    y = 1
   }
  end
- if dir != nil and
-   is_collision_sprt({
-    x = mouse.pos.x + dir.x * 8,
-    y = mouse.pos.y + dir.y * 8
-   }) then
-  dir = nil
+ 
+ if dir == nil then
+  return
  end
- if dir != nil then
-  mouse.dir = dir
-  mouse.start_pos = {
-   x = mouse.pos.x,
-   y = mouse.pos.y
+
+ local end_pos
+ if mouse.end_pos != nil then
+  if dir.x != mouse.dir.x or
+    dir.y != mouse.dir.y then
+   return
+  end
+  end_pos = {
+   x = mouse.end_pos.x +
+     dir.x * 8,
+   y = mouse.end_pos.y +
+     dir.y * 8
   }
-  mouse.end_pos = {
+ else
+  end_pos = {
    x = mouse.pos.x + dir.x * 8,
    y = mouse.pos.y + dir.y * 8
   }
  end
+ if is_collision_sprt(end_pos)
+   then
+  return
+ end
+ 
+ mouse_anim = anim
+ mouse.dir = dir
+ if mouse.start_pos == nil then
+  mouse.start_pos = {
+   x = mouse.pos.x,
+   y = mouse.pos.y
+  }
+ end
+ mouse.end_pos = {
+  x = mouse.pos.x + dir.x * 8,
+  y = mouse.pos.y + dir.y * 8
+ }
 end
 
 function move_mouse()
@@ -915,13 +945,38 @@ function move_mouse()
     mouse.end_pos[axis]
   mouse.start_pos = nil
   mouse.end_pos = nil
+  mouse_anim = nil
+  mouse_anim_pos = 0
+  mouse_move_prgrss = false
+ elseif abs(
+    mouse.end_pos[axis] -
+    mouse.pos[axis]
+   ) < 4
+   then
+  mouse_move_prgrss = true
  end
 end
 
 function draw_mouse()
- spr(209, mouse.pos.x,
-   mouse.pos.y, 1, 1,
-   mouse.dir.x == -1)
+ if mouse_anim == "run_horiz"
+   then
+  local frame = flr(
+    mouse_anim_pos /
+    mouse_anim_time)
+  spr(224 + frame, mouse.pos.x,
+    mouse.pos.y, 1, 1,
+    mouse.dir.x == -1)
+  mouse_anim_pos += delta_t
+  if mouse_anim_pos >= 4 *
+    mouse_anim_time then
+   mouse_anim_pos -= 4 *
+     mouse_anim_time
+  end
+ else
+  spr(209, mouse.pos.x,
+    mouse.pos.y, 1, 1,
+    mouse.dir.x == -1)
+ end
 end
 -->8
 -- food
@@ -1422,10 +1477,10 @@ ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 77777777fee5ddffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+ffffffffffffff5fffffff5fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+efffff5fffff555effe5555efee5555fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+fee5555effe5555ffef5555feff5555effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+fff555ffeef5ffffef5fffffffffff5fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
