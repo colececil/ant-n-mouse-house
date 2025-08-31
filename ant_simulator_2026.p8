@@ -872,12 +872,14 @@ function set_mouse_dir()
    x = 0,
    y = -1
   }
+  anim = "run_up"
  end
  if btn(⬇️) then
   dir = {
    x = 0,
    y = 1
   }
+  anim = "run_down"
  end
  
  if dir == nil then
@@ -966,6 +968,32 @@ function draw_mouse()
   spr(224 + frame, mouse.pos.x,
     mouse.pos.y, 1, 1,
     mouse.dir.x == -1)
+  mouse_anim_pos += delta_t
+  if mouse_anim_pos >= 4 *
+    mouse_anim_time then
+   mouse_anim_pos -= 4 *
+     mouse_anim_time
+  end
+ elseif mouse_anim == "run_down"
+   then
+  local frame = flr(
+    mouse_anim_pos /
+    mouse_anim_time)
+  spr(228 + frame, mouse.pos.x,
+    mouse.pos.y, 1, 1)
+  mouse_anim_pos += delta_t
+  if mouse_anim_pos >= 4 *
+    mouse_anim_time then
+   mouse_anim_pos -= 4 *
+     mouse_anim_time
+  end
+ elseif mouse_anim == "run_up"
+   then
+  local frame = flr(
+    mouse_anim_pos /
+    mouse_anim_time)
+  spr(232 + frame, mouse.pos.x,
+    mouse.pos.y, 1, 1)
   mouse_anim_pos += delta_t
   if mouse_anim_pos >= 4 *
     mouse_anim_time then
@@ -1476,14 +1504,14 @@ ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 77777777eff55dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 77777777fee5ddffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-ffffffffffffff5fffffff5fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-efffff5fffff555effe5555efee5555fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-fee5555effe5555ffef5555feff5555effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-fff555ffeef5ffffef5fffffffffff5fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+fffffffffffffffffffffffffffffffffffefffffffffffffffffffffffeffffffffffffff5f5fffff5f5fffffffffffffffffffffffffffffffffffffffffff
+ffffffffffffffefffffffeffffffffffffefffffffeffffff5e5ffffffeffffff5f5fffff555fffff555fffff555fffffffffffffffffffffffffffffffffff
+efffffefffff5550ffe55550fee555effffefffffffeffffff555fffff555fffff555fffff555fffff555fffff555fffffffffffffffffffffffffffffffffff
+fee55550ffe5555ffef5555feff55550ff555fffff555fffff555fffff555fffff555fffff555fffff555fffff555fffffffffffffffffffffffffffffffffff
+fff555ffeef5ffffef5fffffffffff5fff555fffffe5efffffe5efffff555fffff555fffff555fffff5e5fffff5e5fffffffffffffffffffffffffffffffffff
+ffffffffffffffffffffffffffffffffffe5efffff505fffff505fffffe5efffff5e5fffff5e5fffff5e5fffff5e5fffffffffffffffffffffffffffffffffff
+ffffffffffffffffffffffffffffffffff505fffffffffffffffffffff505ffffffefffffffeffffff5e5ffffffeffffffffffffffffffffffffffffffffffff
+ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5f5ffffffffffffffefffffffeffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
