@@ -813,6 +813,7 @@ end
 
 mouse_speed = 45
 mouse_anim_time = .1
+mouse_idle_sprt = 240
 
 function init_mouse()
  mouse = {
@@ -824,6 +825,7 @@ function init_mouse()
   start_pos = nil,
   end_pos = nil,
   move_prgrss = false,
+  food_dropped = false,
   anim = nil,
   anim_pos = 0
  }
@@ -837,17 +839,28 @@ function get_mouse_start_pos()
 end
 
 function check_mouse_eating()
+ local pos = {
+  x = mouse.pos.x + 4,
+  y = mouse.pos.y + 4
+ }
+
+ if mouse.food_dropped then
+  spawn_food(pos)
+  mouse.food_dropped = false
+ end
+
  if btnp(❎) then
-  spawn_food({
-   x = mouse.pos.x + 4,
-   y = mouse.pos.y + 4
-  })
+  if is_valid_food_pos(pos) then
+   mouse.anim = "nibble"
+   mouse.anim_pos = 0
+  end
  end
 end
 
 function set_mouse_dir()
- if mouse.end_pos != nil and
-    not mouse.move_prgrss then
+ if (mouse.end_pos != nil and
+    not mouse.move_prgrss) or
+    mouse.anim == "nibble" then
   return
  end
 
@@ -998,8 +1011,38 @@ function draw_mouse()
    mouse.anim_pos -= 4 *
      mouse_anim_time
   end
+ elseif mouse.anim == "nibble"
+   then
+  local frame = flr(
+    mouse.anim_pos /
+    mouse_anim_time)
+  local offset
+  if frame <= 3 then
+   offset = 1 + flr(frame / 2)
+  elseif frame <= 12 then
+   local loop_frame =
+     (frame - 4) % 3
+   if loop_frame == 1 then
+    offset = 3
+   else
+    offset = 2
+   end
+  else
+   offset = 2
+  end
+  spr(mouse_idle_sprt + offset,
+    mouse.pos.x, mouse.pos.y, 1,
+    1, mouse.dir.x == -1)
+  mouse.anim_pos += delta_t
+  if mouse.anim_pos >= 15 *
+    mouse_anim_time then
+   mouse.anim = nil
+   mouse.anim_pos = 0
+   mouse.food_dropped = true
+  end
  else
-  spr(209, mouse.pos.x,
+  spr(mouse_idle_sprt,
+    mouse.pos.x,
     mouse.pos.y, 1, 1,
     mouse.dir.x == -1)
  end
@@ -1495,12 +1538,12 @@ ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777ffff5fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777fff545ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777ffff55efffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777fff55dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777eff55dffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777fee5ddffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 fffffffffffffffffffffffffffffffffffefffffffffffffffffffffffeffffffffffffff5f5fffff5f5fffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffefffffffeffffffffffffefffffffeffffff5e5ffffffeffffff5f5fffff555fffff555fffff555fffffffffffffffffffffffffffffffffff
@@ -1510,11 +1553,11 @@ fff555ffeef5ffffef5fffffffffff5fff555fffffe5efffffe5efffff555fffff555fffff555fff
 ffffffffffffffffffffffffffffffffffe5efffff505fffff505fffffe5efffff5e5fffff5e5fffff5e5fffff5e5fffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffff505fffffffffffffffffffff505ffffffefffffffeffffff5e5ffffffeffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5f5ffffffffffffffefffffffeffffffffffffffffffffffffffffffffffffffffffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+fffefefffffefefffffefeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+ffff50ffffff50ffffff0ffffffefeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+fff55ffffff559fffff59ffffff59fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+eff55fffeff55fffeff55fffeff55fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+fee55ffffee55ffffee55ffffee55fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
