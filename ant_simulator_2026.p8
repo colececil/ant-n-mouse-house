@@ -110,17 +110,17 @@ function _draw()
   pset(hole.x - .5, hole.y - .5,
     14)
  end
-
- for food in all(foods) do
-  draw_food(food)
- end
  
  for ant in all(ants) do
   draw_ant(ant)
  end
- 
+
  draw_mouse()
- 
+
+ for food in all(foods) do
+  draw_food(food)
+ end
+
  map(16, 0, 0, 0, 16, 16)
 end
 -->8
@@ -825,7 +825,7 @@ function init_mouse()
   start_pos = nil,
   end_pos = nil,
   move_prgrss = false,
-  food_dropped = false,
+  food_dropped = nil,
   anim = nil,
   anim_pos = 0
  }
@@ -839,20 +839,17 @@ function get_mouse_start_pos()
 end
 
 function check_mouse_eating()
- local pos = {
-  x = mouse.pos.x + 4,
-  y = mouse.pos.y + 4
- }
-
- if mouse.food_dropped then
-  spawn_food(pos)
-  mouse.food_dropped = false
- end
-
  if btnp(❎) then
+  local pos = {
+   x = mouse.pos.x + 4,
+   y = mouse.pos.y + 4
+  }
   if is_valid_food_pos(pos) then
    mouse.anim = "nibble"
    mouse.anim_pos = 0
+   mouse.food_dropped =
+     spawn_food(pos,
+       mouse.dir.x == -1)
   end
  end
 end
@@ -1019,7 +1016,7 @@ function draw_mouse()
   local offset
   if frame <= 3 then
    offset = 1 + flr(frame / 2)
-  elseif frame <= 12 then
+  elseif frame <= 15 then
    local loop_frame =
      (frame - 4) % 3
    if loop_frame == 1 then
@@ -1033,12 +1030,25 @@ function draw_mouse()
   spr(mouse_idle_sprt + offset,
     mouse.pos.x, mouse.pos.y, 1,
     1, mouse.dir.x == -1)
+  if frame == 6 then
+   mouse.food_dropped
+     .anim_frame = 1
+  elseif frame == 9 then
+   mouse.food_dropped
+     .anim_frame = 2
+  elseif frame == 12 then
+   mouse.food_dropped
+     .anim_frame = 3
+  elseif frame == 15 then
+   mouse.food_dropped
+     .anim_frame = 4
+  end
   mouse.anim_pos += delta_t
-  if mouse.anim_pos >= 15 *
+  if mouse.anim_pos >= 18 *
     mouse_anim_time then
    mouse.anim = nil
    mouse.anim_pos = 0
-   mouse.food_dropped = true
+   mouse.food_dropped = nil
   end
  else
   spr(mouse_idle_sprt,
@@ -1099,7 +1109,8 @@ function is_valid_food_pos(pos)
  return false
 end
 
-function spawn_food(pos)
+function spawn_food(pos,
+  flipped)
  if not is_valid_food_pos(pos)
    then
   if debug then
@@ -1114,7 +1125,9 @@ function spawn_food(pos)
  local food = {
   id = get_food_id(),
   pos = pos,
-  amount = 1
+  amount = 1,
+  anim_frame = 0,
+  flipped = flipped
  }
  add(foods, food)
  if debug then
@@ -1124,6 +1137,7 @@ function spawn_food(pos)
    amount = food.amount
   })
  end
+ return food
 end
 
 function get_food_id()
@@ -1150,8 +1164,10 @@ function bite_food(food)
 end
 
 function draw_food(food)
- spr(16, food.pos.x - 4,
-   food.pos.y - 4)
+ spr(244 + food.anim_frame,
+   food.pos.x - 4,
+   food.pos.y - 4, 1, 1,
+   food.flipped)
 end
 -->8
 -- pheromones
@@ -1557,8 +1573,8 @@ fffefefffffefefffffefeffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffff50ffffff50ffffff0ffffffefeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 fff55ffffff559fffff59ffffff59fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 eff55fffeff55fffeff55fffeff55fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-fee55ffffee55ffffee55ffffee55fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+fee55ffffee55ffffee55ffffee55fffffffffffffffffffffffffffffffffffffff9fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+ffffffffffffffffffffffffffffffffffffffffffff9ffffff99ffffff999fffff999ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 __label__
