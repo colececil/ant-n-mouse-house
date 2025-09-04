@@ -115,10 +115,18 @@ function _draw()
   draw_ant(ant)
  end
 
- draw_mouse()
+ if mouse.anim != "run_up" and
+   mouse.anim != "run_down" then
+  draw_mouse()
+ end
 
  for food in all(foods) do
   draw_food(food)
+ end
+ 
+ if mouse.anim == "run_up" or
+   mouse.anim == "run_down" then
+  draw_mouse()
  end
 
  map(16, 0, 0, 0, 16, 16)
