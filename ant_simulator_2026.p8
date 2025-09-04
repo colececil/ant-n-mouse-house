@@ -830,6 +830,7 @@ function init_mouse()
    x = 0,
    y = 1
   },
+  flipped = false,
   start_pos = nil,
   end_pos = nil,
   move_prgrss = false,
@@ -857,7 +858,7 @@ function check_mouse_eating()
    mouse.anim_pos = 0
    mouse.food_dropped =
      spawn_food(pos,
-       mouse.dir.x == -1)
+     mouse.flipped)
   end
  end
 end
@@ -929,6 +930,11 @@ function set_mouse_dir()
  
  mouse.anim = anim
  mouse.dir = dir
+ if mouse.dir.x == -1 then
+  mouse.flipped = true
+ elseif mouse.dir.x == 1 then
+  mouse.flipped = false
+ end
  if mouse.start_pos == nil then
   mouse.start_pos = {
    x = mouse.pos.x,
@@ -983,7 +989,7 @@ function draw_mouse()
     mouse_anim_time)
   spr(224 + frame, mouse.pos.x,
     mouse.pos.y, 1, 1,
-    mouse.dir.x == -1)
+    mouse.flipped)
   mouse.anim_pos += delta_t
   if mouse.anim_pos >= 4 *
     mouse_anim_time then
@@ -1037,7 +1043,7 @@ function draw_mouse()
   end
   spr(mouse_idle_sprt + offset,
     mouse.pos.x, mouse.pos.y, 1,
-    1, mouse.dir.x == -1)
+    1, mouse.flipped)
   if frame == 6 then
    mouse.food_dropped
      .anim_frame = 1
@@ -1062,7 +1068,7 @@ function draw_mouse()
   spr(mouse_idle_sprt,
     mouse.pos.x,
     mouse.pos.y, 1, 1,
-    mouse.dir.x == -1)
+    mouse.flipped)
  end
 end
 -->8
