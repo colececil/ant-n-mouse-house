@@ -12,12 +12,14 @@ mouse = nil
 ants = {}
 foods = {}
 phrmns = {}
+tv = {}
 last_ant_entry = nil
 ant_entry_interval = 5
 
 function _init()
  init_ant_hole_pos()
  init_mouse()
+ init_tv()
 end
 
 function _update60()
@@ -94,6 +96,8 @@ function _update60()
  move_mouse()
  
  phrmns_evap(phrms)
+ 
+ update_tv()
 end
 
 function _draw()
@@ -130,6 +134,8 @@ function _draw()
  end
 
  map(16, 0, 0, 0, 16, 16)
+ 
+ draw_tv()
 end
 -->8
 -- ants
@@ -1461,6 +1467,146 @@ function log_phrmns(phrmns)
   printh(" }", "log")
  end
  printh("}", "log")
+end
+-->8
+-- tv
+
+tv_px_colors = {0, 5, 6}
+
+function init_tv()
+ tv.pixels = {}
+ add(tv.pixels, {
+  x = 20,
+  y = 19
+ })
+ add(tv.pixels, {
+  x = 19,
+  y = 20
+ })
+ add(tv.pixels, {
+  x = 20,
+  y = 20
+ })
+ add(tv.pixels, {
+  x = 18,
+  y = 21,
+  alt_color = 8
+ })
+ add(tv.pixels, {
+  x = 19,
+  y = 21
+ })
+ add(tv.pixels, {
+  x = 20,
+  y = 21
+ })
+ add(tv.pixels, {
+  x = 17,
+  y = 22
+ })
+ add(tv.pixels, {
+  x = 18,
+  y = 22,
+  alt_color = 7
+ })
+ add(tv.pixels, {
+  x = 19,
+  y = 22,
+  alt_color = 14
+ })
+ add(tv.pixels, {
+  x = 16,
+  y = 23
+ })
+ add(tv.pixels, {
+  x = 17,
+  y = 23,
+  alt_color = 10
+ })
+ add(tv.pixels, {
+  x = 18,
+  y = 23,
+  alt_color = 7
+ })
+ add(tv.pixels, {
+  x = 19,
+  y = 23
+ })
+ add(tv.pixels, {
+  x = 16,
+  y = 24
+ })
+ add(tv.pixels, {
+  x = 17,
+  y = 24
+ })
+ add(tv.pixels, {
+  x = 18,
+  y = 24,
+  alt_color = 12
+ })
+ add(tv.pixels, {
+  x = 16,
+  y = 25
+ })
+ add(tv.pixels, {
+  x = 17,
+  y = 25
+ })
+ add(tv.pixels, {
+  x = 16,
+  y = 26
+ })
+ 
+ for px in all(tv.pixels) do
+  if px.alt_color == nil then
+   px.alt_color = 5
+  end
+  px.color = get_tv_px_color(px)
+  px.elapsed_time = 0
+  px.time_limit =
+    get_tv_px_time_limit()
+ end
+end
+
+function update_tv()
+ for px in all(tv.pixels) do
+  px.elapsed_time += delta_t
+  if px.elapsed_time >=
+    px.time_limit then
+   px.elapsed_time = 0
+   px.time_limit =
+     get_tv_px_time_limit()
+   px.color =
+     get_tv_px_color(px)
+  end
+ end
+end
+
+function get_tv_px_color(px)
+ local total =
+   count(tv_px_colors)
+ if px.alt_color != nil then
+  total += 5
+ end
+ 
+ local i = flr(rnd(total)) + 1
+ if i <= count(tv_px_colors)
+   then
+  return tv_px_colors[i]
+ else
+  return px.alt_color
+ end
+end
+
+function get_tv_px_time_limit()
+ return .05 + .05 * rnd()
+end
+
+function draw_tv()
+ for px in all(tv.pixels) do
+  pset(px.x, px.y, px.color)
+ end
 end
 __gfx__
 ffffffff5555555555555555555555555555555555555555ffffffffffffffff67776777ffff6777ffffffffffffffffffffffffffffffffffffffffffffffff
