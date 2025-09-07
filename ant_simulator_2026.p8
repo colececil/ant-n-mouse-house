@@ -6,8 +6,15 @@ __lua__
 
 debug = false
 debug_was_on = false
+is_menu = true
 last_frame_time = 0
 delta_t = 0
+
+selected_mode = "active"
+menu_cursor = {}
+menu_cursor_visible_time = .4
+menu_cursor_cycle_time = .8
+
 mouse = nil
 ants = {}
 foods = {}
@@ -18,6 +25,11 @@ last_ant_entry = nil
 ant_entry_interval = 5
 
 function _init()
+ poke(0x5f36, 64)
+
+ menu_cursor.active = true
+ menu_cursor.elapsed_time = 0
+ 
  init_ant_hole_pos()
  init_mouse()
  init_tv()
@@ -28,7 +40,70 @@ function _update60()
  delta_t = time() -
    last_frame_time
  last_frame_time = time()
+ 
+ if is_menu then
+  update_menu()
+ else
+  update_game()
+ end
+end
 
+function _draw()
+ if is_menu then
+  draw_menu()
+ else
+  draw_game()
+ end
+end
+
+function update_menu()
+ if selected_mode == "active"
+   then
+  menu_cursor.pos = {
+   x = 41,
+   y = 52
+  }
+ else
+  menu_cursor.pos = {
+   x = 41,
+   y = 58
+  }
+ end
+ 
+ menu_cursor.elapsed_time +=
+   delta_t
+ if menu_cursor.elapsed_time >
+   menu_cursor_cycle_time then
+  menu_cursor.elapsed_time = 0
+ end
+ 
+ if menu_cursor.active then
+  if btnp(⬆️) then
+   selected_mode = "active"
+   menu_cursor.elapsed_time = 0
+  end
+  if btnp(⬇️) then
+   selected_mode = "passive"
+   menu_cursor.elapsed_time = 0
+  end
+ 
+  if btnp(❎) then
+   menu_cursor.active = false
+   menu_cursor.elapsed_time = 0
+   menu_cursor.submit_time = 0
+  end
+ else
+  menu_cursor.submit_time +=
+    delta_t
+  if menu_cursor.submit_time >
+    3 * menu_cursor_cycle_time
+    then
+   is_menu = false
+  end
+ end
+end
+
+function update_game()
  if btnp(🅾️) then
   debug = not debug
   if debug then
@@ -103,7 +178,74 @@ function _update60()
  update_faucet()
 end
 
-function _draw()
+function draw_menu()
+ cls(0)
+	palt(0, true)
+	palt(15, true)
+
+	color(14)
+	print("\^w\^tant & mouse" ..
+	  "\nhouse", 21, 5)
+ color(7)
+	print("select mode:\n", 41, 40)
+
+ local cursor_visible =
+   menu_cursor.elapsed_time <=
+   menu_cursor_visible_time
+ if cursor_visible and
+   menu_cursor.active	then
+	 spr(16, menu_cursor.pos.x - 1,
+	   menu_cursor.pos.y - 2, 1, 1,
+	   true)
+	end
+	
+	if menu_cursor.active or
+	  (selected_mode == "active"
+	  and cursor_visible) then
+	 local clr = 7
+	 if selected_mode == "active"
+	   then
+	  clr = 9
+	 end
+	 print("  active", 41, 52, clr)
+	end
+	if menu_cursor.active or
+	  (selected_mode == "passive"
+	  and cursor_visible) then
+	 local clr = 7
+	 if selected_mode == "passive"
+	   then
+	  clr = 9
+	 end
+	 print("  passive", 41, 58,
+	   clr)
+	end
+	
+	if menu_cursor.active then
+  color(2)
+  line(8, 72, 120, 72)
+  if selected_mode == "active"
+    then
+   print("control the mouse " ..
+     "and place", 8, 82)
+   print("cheese crumbs for " ..
+     "the ants!\n")
+   print("⬅️➡️⬆️⬇️: move")
+   print("❎: nibble " ..
+     "cheese")
+  else
+   print("the mouse is " ..
+     "controlled", 8, 82)
+   print("automatically. " ..
+     "sit back and")
+   print("enjoy the show!\n")
+  end
+  print("🅾️: toggle blacklight")
+  print("    (to see pheromone trails)")
+	end
+end
+
+function draw_game()
 	cls(15)
 	palt(0, false)
 	palt(15, true)
