@@ -13,6 +13,7 @@ ants = {}
 foods = {}
 phrmns = {}
 tv = {}
+faucet = {}
 last_ant_entry = nil
 ant_entry_interval = 5
 
@@ -20,6 +21,7 @@ function _init()
  init_ant_hole_pos()
  init_mouse()
  init_tv()
+ init_faucet()
 end
 
 function _update60()
@@ -98,6 +100,7 @@ function _update60()
  phrmns_evap(phrms)
  
  update_tv()
+ update_faucet()
 end
 
 function _draw()
@@ -136,6 +139,7 @@ function _draw()
  map(16, 0, 0, 0, 16, 16)
  
  draw_tv()
+ draw_faucet_drip()
 end
 -->8
 -- ants
@@ -1608,6 +1612,68 @@ function draw_tv()
   pset(px.x, px.y, px.color)
  end
 end
+-->8
+-- faucet
+
+faucet_drip_interval = 4
+faucet_drip_max_hangtime = 1
+faucet_drip_accel = 300
+faucet_start_pos = {
+ x = 120,
+ y = 48
+}
+faucet_end_pos = {
+ x = 120,
+ y = 50
+}
+
+function init_faucet()
+ faucet = {
+  last_drip_time = 0,
+  drip = nil
+ }
+end
+
+function update_faucet()
+ if faucet.drip != nil then
+  if time() -
+    faucet.last_drip_time <
+    faucet_drip_max_hangtime
+    then
+   return
+  end
+  faucet.drip.speed +=
+    faucet_drip_accel * delta_t
+  faucet.drip.pos.y +=
+    faucet.drip.speed * delta_t
+  if flr(faucet.drip.pos.y) >
+    faucet_end_pos.y then
+   faucet.drip = nil
+  end
+ elseif faucet.last_drip_time
+   == nil or time() -
+   faucet.last_drip_time >=
+   faucet_drip_interval then
+  faucet.drip = {
+   pos = {
+    x = faucet_start_pos.x,
+    y = faucet_start_pos.y
+   },
+   hangtime = 0,
+   speed = 0
+  }
+  faucet.last_drip_time = time()
+ end
+end
+
+function draw_faucet_drip()
+ if faucet.drip != nil and
+  flr(faucet.drip.pos.y) <=
+  faucet_end_pos.y then
+  pset(faucet.drip.pos.x,
+    faucet.drip.pos.y, 12)
+ end
+end
 __gfx__
 ffffffff5555555555555555555555555555555555555555ffffffffffffffff67776777ffff6777ffffffffffffffffffffffffffffffffffffffffffffffff
 ffffffff5577777777777755777777777777777777777777ffffffffffffffff67776777ffff6777fffffffffffffffffffffffff66fffffffffffffffffffff
@@ -1650,13 +1716,13 @@ fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff11121
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff111fffffffffffffffffffffffffffffff54ddddddddddffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff44ddddddddddffff
 ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff44d77777777dffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff45d76666657dffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff54d76666665dffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff54d76611161dffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff44d76655611dffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff44d77777711dffff
-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff45d77777777dffff
-ffffffffffffffffffff111111fffffffff111111fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff54d76666667dffff
+ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff45d76666667dffff
+ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff54d76666667dffff
+ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff54d76666667dffff
+ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff44d76666667dffff
+ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff44d77777755dffff
+ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff45d77777575dffff
+ffffffffffffffffffff111111fffffffff111111fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff54d76666567dffff
 ffffffffffffffffffff111111fffffffff111111fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff54d76666667dffff
 ffffffffffff4444444444444444444444444444444444444fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff44d76666667dffff
 fffffffffff54455555555555555555555555555555555544fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff44d76666667dffff
