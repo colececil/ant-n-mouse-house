@@ -1175,7 +1175,11 @@ function get_food_id()
 end
 
 function bite_food(food)
- local new_amount = food.amount - food_bite_size
+ local new_amount = food.amount
+   - food_bite_size
+ if new_amount < 0 then
+  new_amount = 0
+ end
  if debug then
   log("food bitten", {
    id = food.id,
@@ -1188,7 +1192,10 @@ function bite_food(food)
 end
 
 function draw_food(food)
- spr(244 + food.anim_frame,
+ local frame = ceil(
+   food.anim_frame *
+   food.amount)
+ spr(244 + frame,
    food.pos.x - 4,
    food.pos.y - 4, 1, 1,
    food.flipped)
