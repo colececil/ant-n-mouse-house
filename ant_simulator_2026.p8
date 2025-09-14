@@ -23,6 +23,7 @@ tv = {}
 faucet = {}
 last_ant_entry = nil
 ant_entry_interval = 5
+collision_tiles = {}
 
 function _init()
  init_menu()
@@ -35,6 +36,7 @@ function init_menu()
 end
 
 function init_game()
+ init_collision_tiles()
  init_ant_hole_pos()
  init_mouse()
  init_tv()
@@ -180,7 +182,12 @@ function update_game()
  end
 
  check_mouse_eating()
- set_mouse_dir()
+ if selected_mode == "active"
+   then
+  set_mouse_dir()
+ else
+  set_auto_mouse_dir()
+ end
  move_mouse()
  
  phrmns_evap(phrms)
@@ -905,10 +912,11 @@ function is_collision(pos)
  return clsn_color == 0
 end
 
-function is_collision_sprt(pos)
+function check_if_clsn_tile(x,
+  y)
  local clsn_sprt = mget(
-  flr(pos.x / 8),
-  flr((pos.y / 8) + 16)
+  x,
+  y + 16
  )
  local sprt_col = clsn_sprt % 16
  local sprt_row =
@@ -925,6 +933,82 @@ function is_collision_sprt(pos)
   end
  end
  return false
+end
+
+function init_collision_tiles()
+ for x = 0, 15 do
+  for y = 0, 15 do
+   if check_if_clsn_tile(x, y)
+     then
+    set_tile_val(
+     collision_tiles,
+     x,
+     y,
+     true
+    )
+   end
+  end
+ end
+end
+
+function set_tile_val(tbl, x, y,
+  val)
+ local col = tbl[x]
+ if col == nil then
+  col = {}
+  tbl[x] = col
+ end
+ col[y] = val
+end
+
+function get_tile_val(tbl, x, y)
+ local col = tbl[x]
+ if col == nil then
+  return nil
+ end
+ return col[y]
+end
+
+function get_tile_with_min_val(
+  tbl, field)
+ local min_val = nil
+ local tile = nil
+ for x, col in pairs(tbl) do
+  for y, val in pairs(col) do
+   if min_val == nil or
+     val[field] < min_val then
+    min_val = val[field]
+    tile = {
+     x = x,
+     y = y
+    }
+   end
+  end
+ end
+ return tile
+end
+
+function is_clsn_tile(x, y)
+ return get_tile_val(
+   collision_tiles, x, y) != nil
+end
+
+function is_in_clsn_tile(pos)
+ return is_clsn_tile(
+  flr(pos.x / 8),
+  flr(pos.y / 8)
+ )
+end
+
+function is_tile_in_bounds(x, y)
+ return x >= 0 and x <= 15 and
+   y >= 0 and y <= 15
+end
+
+function mnhtn_dist(x1, y1, x2,
+  y2)
+ return abs(x2 - x1) +
+   abs(y2 - y1)
 end
 
 function count_pairs(tbl)
@@ -983,6 +1067,7 @@ end
 -- mouse
 
 mouse_speed = 45
+mouse_hide_time = 5
 mouse_anim_time = .1
 mouse_idle_sprt = 240
 mouse_hiding_spots = {
@@ -1003,6 +1088,10 @@ function init_mouse()
    x = 0,
    y = 1
   },
+  next_action = "enter",
+  time_until_action =
+    mouse_hide_time,
+  path = nil,
   flipped = false,
   start_pos = nil,
   end_pos = nil,
@@ -1028,22 +1117,30 @@ function get_mouse_start_pos()
  else
   pos = rnd(mouse_hiding_spots)
  end
- return pos
+ return {
+  x = pos.x,
+  y = pos.y
+ }
 end
 
 function check_mouse_eating()
- if btnp(❎) then
-  local pos = {
-   x = mouse.pos.x + 4,
-   y = mouse.pos.y + 4
-  }
-  if is_valid_food_pos(pos) then
-   mouse.anim = "nibble"
-   mouse.anim_pos = 0
-   mouse.food_dropped =
-     spawn_food(pos,
-     mouse.flipped)
-  end
+ if btnp(❎) and selected_mode
+   == "active" then
+  start_mouse_nibble()
+ end
+end
+
+function start_mouse_nibble()
+ local pos = {
+  x = mouse.pos.x + 4,
+  y = mouse.pos.y + 4
+ }
+ if is_valid_food_pos(pos) then
+  mouse.anim = "nibble"
+  mouse.anim_pos = 0
+  mouse.food_dropped =
+    spawn_food(pos,
+    mouse.flipped)
  end
 end
 
@@ -1107,7 +1204,7 @@ function set_mouse_dir()
    y = mouse.pos.y + dir.y * 8
   }
  end
- if is_collision_sprt(end_pos)
+ if is_in_clsn_tile(end_pos)
    then
   return
  end
@@ -1127,6 +1224,81 @@ function set_mouse_dir()
  end
  mouse.end_pos = end_pos
  mouse.move_prgrss = false
+end
+
+function set_auto_mouse_dir()
+ if mouse.end_pos == nil and
+   mouse.anim != "nibble" then
+  mouse.time_until_action -=
+    delta_t
+  if mouse.time_until_action >
+    0 then
+   return
+  end
+  if mouse.path == nil then
+   if mouse.next_action ==
+     "enter" then
+    gen_mouse_food_path()
+   elseif mouse.next_action ==
+     "nibble" then
+    start_mouse_nibble()
+   elseif mouse.next_action ==
+     "hide" then
+    gen_mouse_hide_path()
+   end
+   return
+  end
+
+  mouse.start_pos = {
+   x = mouse.pos.x,
+   y = mouse.pos.y
+  }
+  
+  local end_tile =
+    deli(mouse.path, 1)
+  mouse.end_pos = {
+   x = end_tile.x * 8,
+   y = end_tile.y * 8
+  }
+  
+  local x = mouse.end_pos.x -
+    mouse.start_pos.x
+  local y = mouse.end_pos.y -
+    mouse.start_pos.y
+  mouse.dir = {
+   x = mid(-1, x, 1),
+   y = mid(-1, y, 1)
+  }
+  
+  if mouse.dir.x != 0 then
+   mouse.anim = "run_horiz"
+   if mouse.dir.x == -1 then
+    mouse.flipped = true
+   else
+    mouse.flipped = false
+   end
+  else
+   if mouse.dir.y == -1 then
+    mouse.anim = "run_up"
+   else
+    mouse.anim = "run_down"
+   end
+  end
+  
+  if count(mouse.path) == 0 then
+   mouse.path = nil
+   if mouse.next_action ==
+     "enter" then
+    mouse.next_action = "nibble"
+    mouse.time_until_action = 0
+   elseif mouse.next_action ==
+     "hide" then
+    mouse.next_action = "enter"
+    mouse.time_until_action =
+      mouse_hide_time
+   end
+  end
+ end
 end
 
 function move_mouse()
@@ -1163,6 +1335,166 @@ function move_mouse()
    then
   mouse.move_prgrss = true
  end
+end
+
+function gen_mouse_food_path()
+ local options =
+   get_food_pos_options()
+ local food_pos = rnd(options)
+ local dest = {
+  x = flr(food_pos.x / 8),
+  y = flr(food_pos.y / 8)
+ } 
+ log("generating path for " ..
+   "mouse to eat food", {
+  dest = dest
+ })
+ mouse.path = calc_path(dest)
+end
+
+function gen_mouse_hide_path()
+ local hiding_spot =
+   rnd(mouse_hiding_spots)
+ local dest = {
+   x = flr(hiding_spot.x / 8),
+   y = flr(hiding_spot.y / 8)
+ }
+ log("generating path for " ..
+   "mouse to hide", {
+  dest = dest
+ })
+ mouse.path = calc_path(dest)
+end
+
+function calc_path(dest)
+ local open = {}
+ local closed = {}
+ local current = nil
+ 
+ local start = {
+  x = flr(mouse.pos.x / 8),
+  y = flr(mouse.pos.y / 8)
+ }
+	 log("calculating mouse path", {
+  start = start,
+  dest = dest
+ })
+ set_tile_val(
+  open,
+  start.x,
+  start.y,
+  {
+   parent = nil,
+   dist = 0,
+   estmt = mnhtn_dist(
+    start.x,
+    start.y,
+    dest.x,
+    dest.y
+   )
+  }
+ )
+
+ while current == nil or
+   current.x != dest.x or
+   current.y != dest.y do
+  current =
+    get_tile_with_min_val(open,
+    "estmt")
+  current_vals =
+    open[current.x][current.y]
+  
+  set_tile_val(
+   closed,
+   current.x,
+   current.y,
+   current_vals
+  )
+  set_tile_val(
+   open,
+   current.x,
+   current.y,
+   nil
+  )
+  
+  local adj_list = {
+   {
+    x = current.x - 1,
+    y = current.y
+   },
+   {
+    x = current.x + 1,
+    y = current.y
+   },
+   {
+    x = current.x,
+    y = current.y - 1
+   },
+   {
+    x = current.x,
+    y = current.y + 1
+   }
+  }
+  for tile in all(adj_list) do
+   if is_tile_in_bounds(tile.x,
+     tile.y) and
+     not is_clsn_tile(tile.x,
+     tile.y) and
+     get_tile_val(closed,
+     tile.x, tile.y) == nil then
+    local dist =
+      current_vals.dist + 1
+    local estmt = dist +
+      mnhtn_dist(
+       tile.x,
+       tile.y,
+       dest.x,
+       dest.y
+      )
+    local open_tile_val =
+      get_tile_val(open, tile.x,
+      tile.y)
+    if open_tile_val == nil or
+      open_tile_val.dist > dist
+      then
+     set_tile_val(
+      open,
+      tile.x,
+      tile.y,
+      {
+       parent = current,
+       dist = dist,
+       estmt = estmt
+      }
+     )
+    end
+   end
+  end
+ end
+ 
+ local path = {}
+ local current_dir = {
+  x = 0,
+  y = 0
+ }
+ while current != nil do
+  val = get_tile_val(closed,
+    current.x, current.y)
+  local parent = val.parent
+  if parent != nil then
+   local dir = {
+    x = parent.x - current.x,
+    y = parent.y - current.y
+   }
+   if dir.x != current_dir.x or
+     dir.y != current_dir.y then
+    add(path, current, 1)
+    current_dir = dir
+   end
+  end
+  current = parent
+ end
+ return path
 end
 
 function draw_mouse()
@@ -1247,6 +1579,8 @@ function draw_mouse()
    mouse.anim = nil
    mouse.anim_pos = 0
    mouse.food_dropped = nil
+   mouse.next_action = "hide"
+   mouse.time_until_action = 0
   end
  else
   spr(mouse_idle_sprt,
