@@ -25,11 +25,16 @@ last_ant_entry = nil
 ant_entry_interval = 5
 
 function _init()
- poke(0x5f36, 64)
+ init_menu()
+end
 
+function init_menu()
+ poke(0x5f36, 64)
  menu_cursor.active = true
  menu_cursor.elapsed_time = 0
- 
+end
+
+function init_game()
  init_ant_hole_pos()
  init_mouse()
  init_tv()
@@ -40,6 +45,15 @@ function _update60()
  delta_t = time() -
    last_frame_time
  last_frame_time = time()
+
+ if btnp(🅾️) then
+  debug = not debug
+  if debug then
+   printh("", "log",
+     not debug_was_on)
+   debug_was_on = true
+  end
+ end
  
  if is_menu then
   update_menu()
@@ -88,9 +102,15 @@ function update_menu()
   end
  
   if btnp(❎) then
+   log("mode selected", {
+    selected_mode =
+      selected_mode,
+   })
    menu_cursor.active = false
    menu_cursor.elapsed_time = 0
    menu_cursor.submit_time = 0
+   
+   init_game()
   end
  else
   menu_cursor.submit_time +=
@@ -104,15 +124,6 @@ function update_menu()
 end
 
 function update_game()
- if btnp(🅾️) then
-  debug = not debug
-  if debug then
-   printh("", "log",
-     not debug_was_on)
-   debug_was_on = true
-  end
- end
-
  for i, food in ipairs(foods) do
   if food.amount <= 0 then
    if debug then
@@ -974,6 +985,16 @@ end
 mouse_speed = 45
 mouse_anim_time = .1
 mouse_idle_sprt = 240
+mouse_hiding_spots = {
+ {
+  x = 4 * 8,
+  y = 4 * 8
+ },
+ {
+  x = 11 * 8,
+  y = 12 * 8
+ }
+}
 
 function init_mouse()
  mouse = {
@@ -990,13 +1011,24 @@ function init_mouse()
   anim = nil,
   anim_pos = 0
  }
+ log("mouse spawned", {
+  pos = mouse.pos,
+  selected_mode = selected_mode
+ })
 end
 
 function get_mouse_start_pos()
- return {
-  x = 8 * 8,
-  y = 2 * 8
- }
+ local pos
+ if selected_mode == "active"
+   then
+  pos = {
+   x = 8 * 8,
+   y = 2 * 8
+  }
+ else
+  pos = rnd(mouse_hiding_spots)
+ end
+ return pos
 end
 
 function check_mouse_eating()
