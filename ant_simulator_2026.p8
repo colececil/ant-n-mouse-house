@@ -6,6 +6,8 @@ __lua__
 
 debug = false
 debug_was_on = false
+debug_msg_on = false
+debug_msg_time_left = 0
 is_menu = true
 last_frame_time = 0
 delta_t = 0
@@ -50,10 +52,21 @@ function _update60()
 
  if btnp(🅾️) then
   debug = not debug
+  debug_msg_on = true
+  debug_msg_time_left = 1
   if debug then
    printh("", "log",
      not debug_was_on)
    debug_was_on = true
+  end
+ end
+ 
+ if debug_msg_time_left > 0 then
+  debug_msg_time_left -= delta_t
+  if debug_msg_time_left <= 0
+    then
+   debug_msg_time_left = 0
+   debug_msg_on = false
   end
  end
  
@@ -69,6 +82,20 @@ function _draw()
   draw_menu()
  else
   draw_game()
+ end
+ if debug_msg_on then
+  local state = "off"
+  if debug then
+   state = "on"
+  end
+  local msg = "debug mode " ..
+    state
+  local x = (128 - #msg * 4) / 2
+  local clr = 8
+  if is_menu then
+   clr = 7
+  end
+  print(msg, x, 112, clr)
  end
 end
 
@@ -128,14 +155,12 @@ end
 function update_game()
  for i, food in ipairs(foods) do
   if food.amount <= 0 then
-   if debug then
-    log("food completely eaten",
-      {
-       id = food.id,
-       pos = food.pos,
-       amount = food.amount
-      })
-   end
+   log("food completely eaten",
+     {
+      id = food.id,
+      pos = food.pos,
+      amount = food.amount
+     })
    for ant in all(ants) do
     if ant.food_detected and
       ant.food_detected.id ==
@@ -335,13 +360,11 @@ function spawn_ant(foods,
  }
  set_ant_dir(ant, foods, phrmns)
 
- if debug then
-  log("ant spawned", {
-   id = ant.id,
-   pos = ant.pos,
-   dir = ant.dir
-  })
- end
+ log("ant spawned", {
+  id = ant.id,
+  pos = ant.pos,
+  dir = ant.dir
+ })
 
  return ant
 end
@@ -445,30 +468,26 @@ function set_ant_dir(ant, foods,
     food = ant_detect_food(ant,
       foods)
     if food != nil then
-     if debug then
-      log("ant detected food", {
-       id = ant.id,
-       pos = ant.pos,
-       dir = ant.dir,
-       food_id = food.id,
-       food_pos = food.pos
-      })
-     end
+     log("ant detected food", {
+      id = ant.id,
+      pos = ant.pos,
+      dir = ant.dir,
+      food_id = food.id,
+      food_pos = food.pos
+     })
      if ant.phrmn_following !=
        nil then
-      if debug then
-       log("ant added waypoint",
-         {
-          reason = "detected " ..
-            "food while " ..
-            "following " ..
-            "pheromone trail",
-          id = ant.id,
-          waypoint = ant.pos,
-          phrmmn_id =
-            ant.phrmn_following
-         })
-      end
+      log("ant added waypoint",
+       {
+        reason = "detected " ..
+          "food while " ..
+          "following " ..
+          "pheromone trail",
+        id = ant.id,
+        waypoint = ant.pos,
+        phrmmn_id =
+          ant.phrmn_following
+       })
       ant.phrmn_following = nil
       add(ant.waypoints, {
        x = ant.pos.x,
@@ -507,15 +526,13 @@ function set_ant_home_dir(ant,
   waypoint = ant.waypoints[
    waypoints_left - 1
   ]
-  if debug then
-   log("ant reached waypoint", {
-    id = ant.id,
-    pos = ant.pos,
-    dir = ant.dir,
-    waypoint = old_waypoint,
-    new_waypoint = waypoint
-   })
-  end
+  log("ant reached waypoint", {
+   id = ant.id,
+   pos = ant.pos,
+   dir = ant.dir,
+   waypoint = old_waypoint,
+   new_waypoint = waypoint
+  })
  end
 
  optimize_waypoints(ant)
@@ -546,7 +563,7 @@ function optimize_waypoints(ant)
   if waypoints_left > 1 and
     distance(wp, home) >
     distance(ant.pos, home) then
-   if debug then
+   if debug_was_on then
     local new_wp = nil
     if waypoints_left > 2 then
      new_wp = ant.waypoints[
@@ -600,16 +617,14 @@ function set_ant_explr_dir(ant,
    phrmn_angle =
      phrmn_angles[food_id]
    ant.phrmn_following = food_id
-   if debug then
-    log("ant started " ..
-      "following pheromones " ..
-      "while spawning", {
-       id = ant.id,
-       pos = ant.pos,
-       dir = ant.dir,
-       phrmn_id = food_id
-      })
-   end
+   log("ant started " ..
+     "following pheromones " ..
+     "while spawning", {
+      id = ant.id,
+      pos = ant.pos,
+      dir = ant.dir,
+      phrmn_id = food_id
+     })
   end
   if phrmn_angle != nil then
    ant_angle = phrmn_angle
@@ -629,29 +644,25 @@ function set_ant_explr_dir(ant,
      phrmn_angles[food_id]
    if food_id !=
      ant.phrmn_following then
-    if debug then
-     log("ant started " ..
-       "following pheromones", {
-        id = ant.id,
-        pos = ant.pos,
-        dir = ant.dir,
-        phrmn_id = food_id
-       })
-    end
+    log("ant started " ..
+      "following pheromones", {
+       id = ant.id,
+       pos = ant.pos,
+       dir = ant.dir,
+       phrmn_id = food_id
+      })
     if ant.phrmn_following !=
       nil then
-     if debug then
-      log("ant added waypoint", {
-       reason = "switched to " ..
-         "different " ..
-         "pheromone trail",
-       id = ant.id,
-       waypoint = ant.pos,
-       old_phrmn_id =
-         ant.phrmn_following,
-       new_phrmn_id = food_id
-      })
-     end
+     log("ant added waypoint", {
+      reason = "switched to " ..
+        "different " ..
+        "pheromone trail",
+      id = ant.id,
+      waypoint = ant.pos,
+      old_phrmn_id =
+        ant.phrmn_following,
+      new_phrmn_id = food_id
+     })
      add(ant.waypoints, {
       x = ant.pos.x,
       y = ant.pos.y
@@ -666,16 +677,14 @@ function set_ant_explr_dir(ant,
   else
    if ant.phrmn_following != nil
      then
-    if debug then
-     log("ant added waypoint", {
-      reason = "pheromone " ..
-        "trail lost",
-      id = ant.id,
-      waypoint = ant.pos,
-      phrmn_id =
-        ant.phrmn_following
-     })
-    end
+    log("ant added waypoint", {
+     reason = "pheromone " ..
+       "trail lost",
+     id = ant.id,
+     waypoint = ant.pos,
+     phrmn_id =
+       ant.phrmn_following
+    })
     ant.phrmn_following = nil
     add(ant.waypoints, {
      x = ant.pos.x,
@@ -762,17 +771,15 @@ function ant_try_eating(ant)
   }
   if abs(diff.x) < 1 and
     abs(diff.y) < 1 then
-   if debug then
-    log("ant obtained food", {
-     id = ant.id,
-     pos = ant.pos,
-     dir = ant.dir,
-     food_id =
-       ant.food_detected.id,
-     food_pos =
-       ant.food_detected.pos
-    })
-   end
+   log("ant obtained food", {
+    id = ant.id,
+    pos = ant.pos,
+    dir = ant.dir,
+    food_id =
+      ant.food_detected.id,
+    food_pos =
+      ant.food_detected.pos
+   })
    bite_food(ant.food_detected)
    ant.food_held =
      ant.food_detected.id
@@ -815,14 +822,12 @@ function ant_ready_to_exit(ant)
     x = home.x,
     y = home.y
    }
-   if debug then
-    log("ant arrived home", {
-     id = ant.id,
-     pos = ant.pos,
-     dir = ant.dir,
-     home = home
-    })
-   end
+   log("ant arrived home", {
+    id = ant.id,
+    pos = ant.pos,
+    dir = ant.dir,
+    home = home
+   })
   end
   return is_home
  end
@@ -1036,6 +1041,10 @@ function rnd_key(tbl)
 end
 
 function log(msg, data)
+ if not debug_was_on then
+  return
+ end
+
  local total_msg = 'msg:"' ..
    msg .. '"'
  for k, v in pairs(data) do
@@ -1645,12 +1654,10 @@ function spawn_food(pos,
   flipped)
  if not is_valid_food_pos(pos)
    then
-  if debug then
-   log("tried to spawn food " ..
-     "at invalid position", {
-      pos = pos
-     })
-  end
+  log("tried to spawn food " ..
+    "at invalid position", {
+     pos = pos
+    })
   return
  end
 
@@ -1662,13 +1669,11 @@ function spawn_food(pos,
   flipped = flipped
  }
  add(foods, food)
- if debug then
-  log("food spawned", {
-   id = food.id,
-   pos = food.pos,
-   amount = food.amount
-  })
- end
+ log("food spawned", {
+  id = food.id,
+  pos = food.pos,
+  amount = food.amount
+ })
  return food
 end
 
@@ -1688,14 +1693,12 @@ function bite_food(food)
  if new_amount < 0 then
   new_amount = 0
  end
- if debug then
-  log("food bitten", {
-   id = food.id,
-   pos = food.pos,
-   old_amount = food.amount,
-   new_amount = new_amount
-  })
- end
+ log("food bitten", {
+  id = food.id,
+  pos = food.pos,
+  old_amount = food.amount,
+  new_amount = new_amount
+ })
  food.amount = new_amount
 end
 
