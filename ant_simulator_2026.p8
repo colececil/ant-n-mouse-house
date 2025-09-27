@@ -5,6 +5,7 @@ __lua__
 -- by cole cecil
 
 debug = false
+debug_cmd_prgrss = 0
 debug_was_on = false
 debug_msg_on = false
 debug_msg_time_left = 0
@@ -50,7 +51,10 @@ function _update60()
    last_frame_time
  last_frame_time = time()
 
- if btnp(🅾️) then
+ check_debug_cmd()
+ 
+ if debug_cmd_prgrss == 4 then
+  debug_cmd_prgrss = 0
   debug = not debug
   debug_msg_on = true
   debug_msg_time_left = 1
@@ -1037,6 +1041,27 @@ function rnd_key(tbl)
    return k
   end
   i += 1
+ end
+end
+
+function check_debug_cmd()
+ if not btn(🅾️) then
+  debug_cmd_prgrss = 0
+  return
+ end
+ 
+ if debug_cmd_prgrss == 0 and
+   btnp(⬆️) then
+  debug_cmd_prgrss = 1
+ elseif debug_cmd_prgrss == 1
+   and btnp(⬇️) then
+  debug_cmd_prgrss = 2
+ elseif debug_cmd_prgrss == 2
+   and btnp(⬅️) then
+  debug_cmd_prgrss = 3
+ elseif debug_cmd_prgrss == 3
+   and btnp(➡️) then
+  debug_cmd_prgrss = 4
  end
 end
 
