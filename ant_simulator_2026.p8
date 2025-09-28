@@ -27,6 +27,7 @@ faucet = {}
 last_ant_entry = nil
 ant_entry_interval = 5
 collision_tiles = {}
+blacklight = false
 
 function _init()
  init_menu()
@@ -157,6 +158,10 @@ function update_menu()
 end
 
 function update_game()
+ if btnp(🅾️) then
+  blacklight = not blacklight
+ end
+
  for i, food in ipairs(foods) do
   if food.amount <= 0 then
    log("food completely eaten",
@@ -294,13 +299,32 @@ end
 
 function draw_game()
 	cls(15)
+	pal()
 	palt(0, false)
 	palt(15, true)
 	
+	if blacklight then
+	 cls(1)
+	 pal(7, 14)
+	 pal(5, 0)
+	 pal(4, 2)
+	 pal(1, 0)
+	 pal(6, 2)
+	 pal(12, 13)
+	 pal(13, 1)
+	 pal(3, 0)
+	 pal(11, 1)
+	 pal(9, 10)
+	end
+	
 	map(0, 0, 0, 0, 16, 16)
 
+ if debug or blacklight then
+  draw_phrmns(phrmns,
+    blacklight)
+ end
+ 
  if debug then
-  draw_phrmns(phrmns)
   local hole =
     get_ant_hole_pos()
   pset(hole.x - .5, hole.y - .5,
@@ -313,7 +337,13 @@ function draw_game()
 
  if mouse.anim != "run_up" and
    mouse.anim != "run_down" then
+  if blacklight then
+   pal(5, 2)
+  end
   draw_mouse()
+  if blacklight then
+   pal(5, 0)
+  end
  end
 
  for food in all(foods) do
@@ -322,13 +352,38 @@ function draw_game()
  
  if mouse.anim == "run_up" or
    mouse.anim == "run_down" then
+  if blacklight then
+   pal(5, 2)
+  end
   draw_mouse()
+  if blacklight then
+   pal(5, 0)
+  end
  end
 
  map(16, 0, 0, 0, 16, 16)
  
- draw_tv()
+ if blacklight then
+  pal(2, 8)
+  pal(5, 1)
+  pal(6, 5)
+  map(16, 0, 0, 0, 16, 16, 0x1)
+  
+  pal(5, 0)
+  pal(6, 2)
+  pal(13, 0)
+  map(16, 0, 0, 0, 16, 16, 0x2)
+  
+  pal(13, 1)
+  pal(6, 6)
+  map(16, 0, 0, 0, 16, 16, 0x4)
+ end
+ 
  draw_faucet_drip()
+ pal()
+ pal(5, 13)
+ pal(0, 1)
+ draw_tv()
 end
 -->8
 -- ants
@@ -1976,19 +2031,29 @@ function
  return bounds
 end
 
-function draw_phrmns(phrmns)
+function draw_phrmns(phrmns,
+  blacklight)
  for x, col in pairs(phrmns) do
   for y, cell in pairs(col) do
    for food_id, phrmn in
      pairs(cell) do
-    if phrmn > 0 and
-      phrmn <= .33 then
-     pset(x, y, 4)
-    elseif phrmn > .33 and
-      phrmn <= .66 then
-     pset(x, y, 8)
-    elseif phrmn > .66 then
-     pset(x, y, 10)
+    if blacklight then
+     if phrmn > 0 and
+       phrmn <= .8 then
+      pset(x, y, 2)
+     elseif phrmn > .8 then
+      pset(x, y, 14)
+     end
+    else
+     if phrmn > 0 and
+       phrmn <= .33 then
+      pset(x, y, 4)
+     elseif phrmn > .33 and
+       phrmn <= .66 then
+      pset(x, y, 8)
+     elseif phrmn > .66 then
+      pset(x, y, 10)
+     end
     end
    end
   end
@@ -2477,8 +2542,8 @@ __label__
 55555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
 
 __gff__
-0000000000000000000001000000010000000000000000000000010000010100000000000000000000000000010000000000000000000000000002010102020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000004040000000001000000010100000000040400000001010000000101000000000000000002010100010001010000000000000002010101000000010100000000000000000101010000000000000000000000000000000000000000000000000000000000000000000000000000020001000002000000000000000000
+0000020202000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __map__
 0103030405030303030303040503030201030304050303030303030405030e0fff01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 1113131415131313131313141513131211060714151313131313131415131e1fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
