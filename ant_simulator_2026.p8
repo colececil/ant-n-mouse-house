@@ -1326,7 +1326,8 @@ function set_auto_mouse_dir()
   end
   if mouse.path == nil then
    if mouse.next_action ==
-     "enter" then
+     "enter" and count_foods() <
+     3 then
     gen_mouse_food_path()
    elseif mouse.next_action ==
      "nibble" then
@@ -1765,6 +1766,14 @@ function get_food_id()
   food_current_id += 1
  end
  return food_current_id
+end
+
+function count_foods()
+ local count = 0
+ for k, v in pairs(foods) do
+  count += 1
+ end
+ return count
 end
 
 function bite_food(food)
