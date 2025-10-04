@@ -303,22 +303,8 @@ function draw_game()
 	palt(0, false)
 	palt(15, true)
 	
-	if blacklight then
-	 cls(1)
-	 pal(7, 14)
-	 pal(5, 0)
-	 pal(4, 2)
-	 pal(1, 0)
-	 pal(6, 2)
-	 pal(12, 13)
-	 pal(13, 1)
-	 pal(3, 0)
-	 pal(11, 1)
-	 pal(9, 10)
-	end
+	draw_map_base()
 	
-	map(0, 0, 0, 0, 16, 16)
-
  if debug or blacklight then
   draw_phrmns(phrmns,
     blacklight)
@@ -335,6 +321,10 @@ function draw_game()
   draw_ant(ant)
  end
 
+ if mouse_couch_check() then
+  draw_map_top()
+ end
+ 
  if mouse.anim != "run_up" and
    mouse.anim != "run_down" then
   if blacklight then
@@ -361,7 +351,37 @@ function draw_game()
   end
  end
 
- map(16, 0, 0, 0, 16, 16)
+ if not mouse_couch_check() then
+  draw_map_top()
+ end
+ 
+ draw_faucet_drip()
+ pal()
+ pal(5, 13)
+ pal(0, 1)
+ draw_tv()
+end
+
+function draw_map_base()
+ if blacklight then
+	 cls(1)
+	 pal(7, 14)
+	 pal(5, 0)
+	 pal(4, 2)
+	 pal(1, 0)
+	 pal(6, 2)
+	 pal(12, 13)
+	 pal(13, 1)
+	 pal(3, 0)
+	 pal(11, 1)
+	 pal(9, 10)
+	end
+	
+	map(0, 0, 0, 0, 16, 16)
+end
+
+function draw_map_top()
+map(16, 0, 0, 0, 16, 16)
  
  if blacklight then
   pal(2, 8)
@@ -378,12 +398,6 @@ function draw_game()
   pal(6, 6)
   map(16, 0, 0, 0, 16, 16, 0x4)
  end
- 
- draw_faucet_drip()
- pal()
- pal(5, 13)
- pal(0, 1)
- draw_tv()
 end
 -->8
 -- ants
@@ -1169,6 +1183,16 @@ mouse_hiding_spots = {
   y = 12 * 8
  }
 }
+mouse_awkwrd_spots = {
+ {
+  x = 3 * 8,
+  y = 5 * 8
+ },
+ {
+  x = 5 * 8,
+  y = 5 * 8
+ }
+}
 
 function init_mouse()
  mouse = {
@@ -1585,6 +1609,25 @@ function calc_path(dest)
   current = parent
  end
  return path
+end
+
+function mouse_couch_check()
+ if mouse.anim == "run_horiz" or
+   mouse.anim == "run_up" or
+   mouse.anim == "run_down" then
+  return false
+ end
+ 
+ for spot in
+   all(mouse_awkwrd_spots) do
+  if flr(mouse.pos.x) == spot.x
+    and flr(mouse.pos.y) ==
+    spot.y then
+   return true
+  end
+ end
+ 
+ return false
 end
 
 function draw_mouse()
