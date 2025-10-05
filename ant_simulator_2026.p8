@@ -365,23 +365,22 @@ end
 function draw_map_base()
  if blacklight then
 	 cls(1)
-	 pal(7, 14)
-	 pal(5, 0)
-	 pal(4, 2)
-	 pal(1, 0)
-	 pal(6, 2)
-	 pal(12, 13)
-	 pal(13, 1)
-	 pal(3, 0)
-	 pal(11, 1)
-	 pal(9, 10)
+	 blcklght_clr()
 	end
 	
 	map(0, 0, 0, 0, 16, 16)
+	
+	pal()
+ palt(0, false)
+	palt(15, true)
 end
 
 function draw_map_top()
-map(16, 0, 0, 0, 16, 16)
+ if blacklight then
+  blcklght_clr()
+ end
+ 
+ map(16, 0, 0, 0, 16, 16)
  
  if blacklight then
   pal(2, 8)
@@ -398,6 +397,19 @@ map(16, 0, 0, 0, 16, 16)
   pal(6, 6)
   map(16, 0, 0, 0, 16, 16, 0x4)
  end
+end
+
+function blcklght_clr()
+ pal(7, 14)
+ pal(5, 0)
+ pal(4, 2)
+ pal(1, 0)
+ pal(6, 2)
+ pal(12, 13)
+ pal(13, 1)
+ pal(3, 0)
+ pal(11, 1)
+ pal(9, 10)
 end
 -->8
 -- ants
@@ -2097,11 +2109,22 @@ function draw_phrmns(phrmns,
     total += phrmn
    end
    if blacklight then
+    local flr_clr = pget(x, y)
     if total > 0 and
       total <= .5 then
-     pset(x, y, 2)
+     local clr = 2
+     if flr_clr == 14 or flr_clr
+       == 2 then
+      clr = 5
+     end
+     pset(x, y, clr)
     elseif total > .5 then
-     pset(x, y, 14)
+     local clr = 14
+     if flr_clr == 14 or flr_clr
+       == 2 then
+      clr = 15
+     end
+     pset(x, y, clr)
     end
    else
     if total > 0 and
@@ -2140,7 +2163,7 @@ function log_phrmns(phrmns)
 end
 
 function add_test_phrmns(phrmns)
- local y = 9 * 8
+ local y = 6 * 8
  local min_x = 1 * 8
  local max_x = 15 * 8 - 1
  local delta = 1 / (max_x -
