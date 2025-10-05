@@ -200,10 +200,10 @@ function update_game()
  end
  
  for i, ant in ipairs(ants) do
-  if ant.home_arrival_time !=
+  if (ant.home_arrival_time !=
     nil and time() -
-    ant.home_arrival_time > .75
-    then
+    ant.home_arrival_time > .75)
+    or ant_dead(ant) then
    deli(ants, i)
   else
    ant_try_eating(ant)
@@ -419,6 +419,7 @@ ant_current_id = 0
 
 ant_speed = 1.5
 ant_time_limit = 120
+ant_lifespan = 360
 ant_dir_change_time = 1
 ant_max_angle_change = .15
 ant_food_detect_dist = 10
@@ -886,6 +887,18 @@ function ant_returning(ant)
  return ant.food_held != nil or
     time() - ant.entry_time >
     ant_time_limit
+end
+
+function ant_dead(ant)
+ local dead = time() -
+   ant.entry_time > ant_lifespan
+ if dead then
+  log("ant died", {
+   id = ant.id,
+   pos = ant.pos
+  })
+ end
+ return dead
 end
 
 function ant_ready_to_exit(ant)
