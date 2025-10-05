@@ -25,7 +25,7 @@ phrmns = {}
 tv = {}
 faucet = {}
 last_ant_entry = nil
-ant_entry_interval = 5
+ant_entry_interval = 7
 collision_tiles = {}
 blacklight = false
 
@@ -190,8 +190,8 @@ function update_game()
  end
 
  if count(ants) == 0 or
-   time() - last_ant_entry > 5
-   then
+   time() - last_ant_entry >
+   ant_entry_interval then
   add(
    ants,
    spawn_ant(foods, phrmns)
@@ -864,8 +864,9 @@ end
 function ant_excrete_phrmn(ant,
   phrmns)
  if ant.food_held != nil then
-  add_phrmn(phrmns, ant.pos,
-    ant.food_held)
+  add_phrmn(phrmns,
+    phrmn_add_rate * delta_t,
+    ant.pos, ant.food_held)
  end
 end
 
@@ -1726,7 +1727,7 @@ end
 -- food
 
 food_current_id = 0
-food_bite_size = .05
+food_bite_size = .07
 
 function get_food_pos_options()
  local pos_options = {}
@@ -1846,11 +1847,12 @@ end
 -->8
 -- pheromones
 
-phrmn_add_rate = .15
-phrmn_evap_rate = .003
+phrmn_add_rate = .3
+phrmn_evap_rate = .005
+phrmn_evap_mult = 5
 
-function add_phrmn(phrmns, pos,
-   food_id)
+function add_phrmn(phrmns,
+   amount, pos, food_id)
  local col = phrmns[flr(pos.x)]
  if col == nil then
   col = {}
@@ -1868,8 +1870,7 @@ function add_phrmn(phrmns, pos,
   phrmn = 0
  end
  
- phrmn += phrmn_add_rate *
-   delta_t
+ phrmn += amount
  phrmn = min(phrmn, 1)
  cell[food_id] = phrmn
 end
@@ -1879,8 +1880,11 @@ function phrmns_evap(phrms)
   for y, cell in pairs(col) do
    for food_id, phrmn in
      pairs(cell) do
-    phrmn -= phrmn_evap_rate *
-      delta_t
+    local rate = phrmn_evap_rate
+      * phrmn * phrmn_evap_mult
+    rate = max(rate,
+      phrmn_evap_rate)
+    phrmn -= rate * delta_t
     cell[food_id] = phrmn
     if phrmn <= 0 then
      cell[food_id] = nil
@@ -2087,25 +2091,27 @@ function draw_phrmns(phrmns,
   blacklight)
  for x, col in pairs(phrmns) do
   for y, cell in pairs(col) do
+   local total = 0
    for food_id, phrmn in
      pairs(cell) do
-    if blacklight then
-     if phrmn > 0 and
-       phrmn <= .8 then
-      pset(x, y, 2)
-     elseif phrmn > .8 then
-      pset(x, y, 14)
-     end
-    else
-     if phrmn > 0 and
-       phrmn <= .33 then
-      pset(x, y, 4)
-     elseif phrmn > .33 and
-       phrmn <= .66 then
-      pset(x, y, 8)
-     elseif phrmn > .66 then
-      pset(x, y, 10)
-     end
+    total += phrmn
+   end
+   if blacklight then
+    if total > 0 and
+      total <= .5 then
+     pset(x, y, 2)
+    elseif total > .5 then
+     pset(x, y, 14)
+    end
+   else
+    if total > 0 and
+      total <= .33 then
+     pset(x, y, 4)
+    elseif total > .33 and
+      total <= .66 then
+     pset(x, y, 8)
+    elseif total > .66 then
+     pset(x, y, 10)
     end
    end
   end
@@ -2131,6 +2137,24 @@ function log_phrmns(phrmns)
   printh(" }", "log")
  end
  printh("}", "log")
+end
+
+function add_test_phrmns(phrmns)
+ local y = 9 * 8
+ local min_x = 1 * 8
+ local max_x = 15 * 8 - 1
+ local delta = 1 / (max_x -
+   min_x + 1)
+ local amount = 0
+ for x = min_x, max_x do
+  amount += delta
+  local pos = {
+   x = x,
+   y = y
+  }
+  add_phrmn(phrmns, amount, pos,
+    0)
+ end
 end
 -->8
 -- tv
@@ -2629,3 +2653,5 @@ a1d0d0d0d0d0d0d0d0ffffffffffffa1ffffffffffffffffffffffffffffffffffffffffffffffff
 a1d0d0d0d0d0d0d0d0b8b9babbbcbda1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 a1d0d0d0d0d0d0d0d0d0c9cacbcc96a1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 a1a2a2a2a2a2a2a2a2a2a2a2a2a2a2a1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+__sfx__
+0001000005250082500b2500e2501025010250102500f2500d2500b25008250042500025000250020500205003050040500305003050020500205002050000500105001050000500005000050013500035000650
