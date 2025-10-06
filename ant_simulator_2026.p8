@@ -26,6 +26,7 @@ tv = {}
 faucet = {}
 last_ant_entry = nil
 ant_entry_interval = 7
+ant_gather_rate = 0
 collision_tiles = {}
 blacklight = false
 
@@ -189,6 +190,9 @@ function update_game()
   end
  end
 
+ local current_interval =
+   ant_entry_interval - 2 *
+   ant_gather_rate
  if count(ants) == 0 or
    time() - last_ant_entry >
    ant_entry_interval then
@@ -200,10 +204,18 @@ function update_game()
  end
  
  for i, ant in ipairs(ants) do
-  if (ant.home_arrival_time !=
+  if ant.home_arrival_time !=
     nil and time() -
-    ant.home_arrival_time > .75)
-    or ant_dead(ant) then
+    ant.home_arrival_time > .75
+    then
+   if ant.food_held != nil then
+    ant_gather_rate += .08
+    if ant_gather_rate > 1 then
+     ant_gather_rate = 1
+    end
+   end
+   deli(ants, i)
+  elseif ant_dead(ant) then
    deli(ants, i)
   else
    ant_try_eating(ant)
@@ -213,6 +225,11 @@ function update_game()
      phrmns)
    move_ant(ant)
   end
+ end
+ ant_gather_rate -= .008 *
+   delta_t
+ if ant_gather_rate < 0 then
+  ant_gather_rate = 0
  end
 
  check_mouse_eating()
