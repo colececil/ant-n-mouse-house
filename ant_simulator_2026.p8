@@ -26,7 +26,10 @@ tv = {}
 faucet = {}
 last_ant_entry = nil
 ant_entry_interval = 7
+ant_entry_variation = 2
 ant_gather_rate = 0
+ant_gather_rate_inc = .08
+ant_gather_rate_dec = .008
 collision_tiles = {}
 blacklight = false
 
@@ -191,11 +194,12 @@ function update_game()
  end
 
  local current_interval =
-   ant_entry_interval - 2 *
+   ant_entry_interval -
+   ant_entry_variation *
    ant_gather_rate
  if count(ants) == 0 or
    time() - last_ant_entry >
-   ant_entry_interval then
+   current_interval then
   add(
    ants,
    spawn_ant(foods, phrmns)
@@ -209,7 +213,8 @@ function update_game()
     ant.home_arrival_time > .75
     then
    if ant.food_held != nil then
-    ant_gather_rate += .08
+    ant_gather_rate +=
+      ant_gather_rate_inc
     if ant_gather_rate > 1 then
      ant_gather_rate = 1
     end
@@ -226,8 +231,8 @@ function update_game()
    move_ant(ant)
   end
  end
- ant_gather_rate -= .008 *
-   delta_t
+ ant_gather_rate -=
+   ant_gather_rate_dec * delta_t
  if ant_gather_rate < 0 then
   ant_gather_rate = 0
  end
@@ -377,6 +382,15 @@ function draw_game()
  pal(5, 13)
  pal(0, 1)
  draw_tv()
+ 
+ if debug then
+  print("rate: " ..
+    ant_gather_rate, 10, 5, 3)
+  print("interval: " ..
+   ant_entry_interval -
+   ant_entry_variation *
+   ant_gather_rate, 75, 5, 3)
+ end
 end
 
 function draw_map_base()
