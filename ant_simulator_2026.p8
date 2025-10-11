@@ -543,8 +543,18 @@ end
 
 function set_ant_sense_area(ant)
  local sense_area = {}
- local look_angle =
-   atan2(ant.dir.x, ant.dir.y)
+ local look_angle
+ if not ant_returning(ant) then
+  look_angle =
+    atan2(ant.dir.x, ant.dir.y)
+ else
+  local hole_pos =
+    get_ant_hole_pos()
+  look_angle = atan2(
+   hole_pos.x - ant.pos.x,
+   hole_pos.y - ant.pos.y
+  )
+ end
  local angle_incr = (2 *
    ant_phrmn_detect_angle) /
    (ant_sense_area_vrtcs - 2)
@@ -627,43 +637,104 @@ end
 
 function set_ant_home_dir(ant,
   phrmns)
- local waypoints_left =
-   count(ant.waypoints)
- local waypoint = ant.waypoints[
-  waypoints_left
- ]
+ set_ant_sense_area(ant)
+ local phrmn_angles =
+    get_angle_to_phrmn(phrmns,
+    ant)
+ local phrmn_angle
+ if count_pairs(phrmn_angles) >
+   0 then
+  if ant.phrmn_following == nil
+    and ant.food_held != nil
+    then
+   ant.phrmn_following =
+     ant.food_held
+   log("ant started following "
+     .. "pheromones of held "
+     .. "food type while going "
+     .. "home", {
+      id = ant.id,
+      pos = ant.pos,
+      dir = ant.dir,
+      food_id = ant.food_held,
+      phrmn_id =
+        ant.phrmn_following
+     })
+  end
+  if ant.phrmn_following == nil
+    then
+   ant.phrmn_following =
+     rnd_key(phrmn_angles)
+   log("ant started following "
+     .. "pheromones while "
+     .. "going home", {
+      id = ant.id,
+      pos = ant.pos,
+      dir = ant.dir,
+      food_id = ant.food_held,
+      phrmn_id =
+        ant.phrmn_following
+     })
+  end
+  phrmn_angle = phrmn_angles[
+    ant.phrmn_following]
+ elseif ant.phrmn_following !=
+   nil then
+  ant.phrmn_following = nil
+  log("ant lost pheromone "
+    .. "trail while going "
+    .. "home", {
+     id = ant.id,
+     pos = ant.pos,
+     dir = ant.dir,
+     food_id = ant.food_held
+    })
+ end
+ 
+ if phrmn_angle != nil then
+  ant.dir = {
+   x = cos(phrmn_angle),
+   y = sin(phrmn_angle)
+  }
+ else
+  local waypoints_left =
+    count(ant.waypoints)
+  local waypoint =
+   ant.waypoints[waypoints_left]
 
- if waypoints_left > 1 and
-   abs(waypoint.x - ant.pos.x) <
-   1 and
-   abs(waypoint.y - ant.pos.y) <
-   1 then
-  local old_waypoint =
-    deli(ant.waypoints)
+  if waypoints_left > 1 and
+    abs(waypoint.x - ant.pos.x)
+    < 1 and
+    abs(waypoint.y - ant.pos.y)
+    < 1 then
+   local old_waypoint =
+     deli(ant.waypoints)
+   waypoint = ant.waypoints[
+    waypoints_left - 1
+   ]
+   log("ant reached waypoint", {
+    id = ant.id,
+    pos = ant.pos,
+    dir = ant.dir,
+    waypoint = old_waypoint,
+    new_waypoint = waypoint
+   })
+  end
+
+  optimize_waypoints(ant)
   waypoint = ant.waypoints[
-   waypoints_left - 1
-  ]
-  log("ant reached waypoint", {
-   id = ant.id,
-   pos = ant.pos,
-   dir = ant.dir,
-   waypoint = old_waypoint,
-   new_waypoint = waypoint
-  })
+    count(ant.waypoints)]
+
+  local angle = atan2(
+   waypoint.x - ant.pos.x,
+   waypoint.y - ant.pos.y
+  )
+  ant.dir = {
+   x = cos(angle),
+   y = sin(angle)
+  }
  end
 
- optimize_waypoints(ant)
- waypoint = ant.waypoints[
-   count(ant.waypoints)]
-
- local angle = atan2(
-  waypoint.x - ant.pos.x,
-  waypoint.y - ant.pos.y
- )
- ant.dir = {
-  x = cos(angle),
-  y = sin(angle)
- }
  ant.dir_change_time = time()
 end
 
@@ -991,8 +1062,7 @@ function draw_ant(ant)
   
   draw_sense_area =
     ant.sense_area != nil and
-    ant.food_detected == nil and
-    not ant_returning(ant)
+    ant.food_detected == nil
  end
 
  if draw_sense_area then
@@ -1093,6 +1163,16 @@ function init_collision_tiles()
    end
   end
  end
+end
+
+function is_touching(ref_pos,
+  tst_pos)
+ local ref_x = flr(ref_pos.x)
+ local ref_y = flr(ref_pos.y)
+ local tst_x = flr(tst_pos.x)
+ local tst_y = flr(tst_pos.y)
+ return abs(tst_x - ref_x) < 2
+   and abs(tst_y - ref_y) < 2
 end
 
 function set_tile_val(tbl, x, y,
@@ -1971,7 +2051,16 @@ function get_angle_to_phrmn(
   phrmns, ant)
  local bounds
  local look_angle
- if ant.dir != nil then
+ if ant_returning(ant) then
+  bounds =
+    get_phrmn_dtct_bnds(ant)
+  local hole_pos =
+    get_ant_hole_pos()
+  look_angle = atan2(
+   hole_pos.x - ant.pos.x,
+   hole_pos.y - ant.pos.y
+  )
+ elseif ant.dir != nil then
   bounds =
     get_phrmn_dtct_bnds(ant)
   look_angle =
@@ -2007,11 +2096,16 @@ function get_angle_to_phrmn(
      local in_sense_area
      if look_angle != nil then
       in_sense_area = dist <
-        ant_phrmn_detect_dist and
+        ant_phrmn_detect_dist
+        and
         angle > (look_angle -
         ant_phrmn_detect_angle)
-        and angle < (look_angle +
+        and
+        angle < (look_angle +
         ant_phrmn_detect_angle)
+        and
+        not is_touching(ant.pos,
+        {x = i, y = j})
      else
       in_sense_area = dist <
         ant_phrmn_detect_dist
