@@ -755,8 +755,17 @@ function set_ant_explr_dir(ant,
     ant)
   if count_pairs(phrmn_angles) >
     0 then
-   local food_id = rnd_key(
-     phrmn_angles)
+   local food_id
+   if ant.phrmn_following != nil
+     and phrmn_angles[
+     ant.phrmn_following] != nil
+     then
+    food_id =
+      ant.phrmn_following
+   else
+    food_id = rnd_key(
+      phrmn_angles)
+   end
    phrmn_angle =
      phrmn_angles[food_id]
    if food_id !=
