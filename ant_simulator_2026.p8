@@ -1307,31 +1307,37 @@ function log(msg, data)
   return
  end
 
- local total_msg = 'msg:"' ..
-   msg .. '"'
+ local total_msg = '{"msg": "'
+   .. msg .. '"'
  for k, v in pairs(data) do
   if type(v) == "table" then
-   local tmp_v = ''
+   local tmp_v = '{'
    if v.x != nil and v.y != nil
      then
-    tmp_v = 'x=' .. tostr(v.x)
-      .. ',y=' .. tostr(v.y)
+    tmp_v ..= '"x": ' ..
+      tostr(v.x) .. ', "y": '
+      .. tostr(v.y)
    end
    for vk, vv in pairs(v) do
     if vk != "x" and vk != "y"
       then
      if tmp_v != '' then
-      tmp_v ..= ','
+      tmp_v ..= ', '
      end
-     tmp_v ..= vk .. '=' ..
-       tostr(vv)
+     tmp_v ..= '"' .. vk ..
+       '": "' .. tostr(vv) ..
+       '"'
     end
    end
-   v = tmp_v
+   v = tmp_v .. '}'
+  elseif type(v) != "number"
+    then
+   v = '"' .. v .. '"'
   end
-  total_msg ..= ', ' .. k ..
-    ':"' .. tostr(v) .. '"'
+  total_msg ..= ', "' .. k ..
+    '": ' .. tostr(v)
  end
+ total_msg ..= '}'
  printh(total_msg, "log")
 end
 -->8
