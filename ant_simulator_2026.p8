@@ -457,6 +457,7 @@ ant_food_detect_dist = 10
 ant_sense_area_vrtcs = 6
 ant_phrmn_detect_angle = .2
 ant_phrmn_detect_dist = 5
+ant_phrmn_focus_time = 5
 
 function spawn_ant(foods,
   phrmns)
@@ -473,7 +474,8 @@ function spawn_ant(foods,
 		food_detected = nil,
 		food_held = nil,
 		sense_area = nil,
-		phrmn_following = nil
+		phrmn_following = nil,
+		phrmn_change_time = nil
  }
  set_ant_dir(ant, foods, phrmns)
 
@@ -616,6 +618,8 @@ function set_ant_dir(ant, foods,
           ant.phrmn_following
        })
       ant.phrmn_following = nil
+      ant.phrmn_change_time =
+        nil
       add(ant.waypoints, {
        x = ant.pos.x,
        y = ant.pos.y
@@ -805,6 +809,8 @@ function set_ant_explr_dir(ant,
    phrmn_angle =
      phrmn_angles[food_id]
    ant.phrmn_following = food_id
+   ant.phrmn_change_time =
+     time()
    log("ant started " ..
      "following pheromones " ..
      "while spawning", {
@@ -830,6 +836,9 @@ function set_ant_explr_dir(ant,
    if ant.phrmn_following != nil
      and phrmn_angles[
      ant.phrmn_following] != nil
+     and time() -
+     ant.phrmn_change_time <
+     ant_phrmn_focus_time
      then
     food_id =
       ant.phrmn_following
@@ -867,6 +876,8 @@ function set_ant_explr_dir(ant,
     end
     ant.phrmn_following =
       food_id
+    ant.phrmn_change_time =
+      time()
    end
   end
   if phrmn_angle != nil then
@@ -883,6 +894,7 @@ function set_ant_explr_dir(ant,
        ant.phrmn_following
     })
     ant.phrmn_following = nil
+    ant.phrmn_change_time = nil
     add(ant.waypoints, {
      x = ant.pos.x,
      y = ant.pos.y
