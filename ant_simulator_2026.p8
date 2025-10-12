@@ -30,6 +30,8 @@ ant_entry_variation = 2
 ant_gather_rate = 0
 ant_gather_rate_inc = .08
 ant_gather_rate_dec = .008
+ant_last_gather_rate = time()
+ant_max_gather_rate_wait = 90
 collision_tiles = {}
 blacklight = false
 max_insffcnt_food_time = 5
@@ -224,6 +226,8 @@ function update_game()
     if ant_gather_rate > 1 then
      ant_gather_rate = 1
     end
+    ant_last_gather_rate =
+      time()
    end
    deli(ants, i)
   elseif ant_dead(ant) then
@@ -1514,11 +1518,16 @@ function set_auto_mouse_dir()
   end
   if mouse.path == nil then
    if mouse.next_action ==
-     "enter" and count_foods() <
-     3 and time() -
+     "enter" and ((count_foods()
+     < 3 and time() -
      insffcnt_food_time >
-     max_insffcnt_food_time then
+     max_insffcnt_food_time) or
+     (time() -
+     ant_last_gather_rate >
+     ant_max_gather_rate_wait)) then
     gen_mouse_food_path()
+    ant_last_gather_rate =
+      time()
    elseif mouse.next_action ==
      "nibble" then
     start_mouse_nibble()
