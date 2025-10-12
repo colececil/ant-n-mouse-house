@@ -337,9 +337,8 @@ function draw_game()
 	
 	draw_map_base()
 	
- if debug or blacklight then
-  draw_phrmns(phrmns,
-    blacklight)
+ if blacklight then
+  draw_phrmns(phrmns)
  end
  
  if debug then
@@ -395,11 +394,11 @@ function draw_game()
  
  if debug then
   print("rate: " ..
-    ant_gather_rate, 10, 5, 3)
+    ant_gather_rate, 6, 5, 3)
   print("interval: " ..
    ant_entry_interval -
    ant_entry_variation *
-   ant_gather_rate, 75, 5, 3)
+   ant_gather_rate, 60, 5, 3)
  end
 end
 
@@ -2284,8 +2283,7 @@ function
  return bounds
 end
 
-function draw_phrmns(phrmns,
-  blacklight)
+function draw_phrmns(phrmns)
  for x, col in pairs(phrmns) do
   for y, cell in pairs(col) do
    local total = 0
@@ -2293,34 +2291,22 @@ function draw_phrmns(phrmns,
      pairs(cell) do
     total += phrmn
    end
-   if blacklight then
-    local flr_clr = pget(x, y)
-    if total > 0 and
-      total <= .5 then
-     local clr = 2
-     if flr_clr == 14 or flr_clr
-       == 2 then
-      clr = 5
-     end
-     pset(x, y, clr)
-    elseif total > .5 then
-     local clr = 14
-     if flr_clr == 14 or flr_clr
-       == 2 then
-      clr = 15
-     end
-     pset(x, y, clr)
+   local flr_clr = pget(x, y)
+   if total > 0 and
+     total <= .5 then
+    local clr = 2
+    if flr_clr == 14 or flr_clr
+      == 2 then
+     clr = 5
     end
-   else
-    if total > 0 and
-      total <= .33 then
-     pset(x, y, 4)
-    elseif total > .33 and
-      total <= .66 then
-     pset(x, y, 8)
-    elseif total > .66 then
-     pset(x, y, 10)
+    pset(x, y, clr)
+   elseif total > .5 then
+    local clr = 14
+    if flr_clr == 14 or flr_clr
+      == 2 then
+     clr = 15
     end
+    pset(x, y, clr)
    end
   end
  end
