@@ -1418,8 +1418,8 @@ end
 
 function start_mouse_nibble()
  local pos = {
-  x = mouse.pos.x + 4,
-  y = mouse.pos.y + 4
+  x = mouse.pos.x / 8,
+  y = mouse.pos.y / 8
  }
  if is_valid_food_pos(pos) then
   mouse.anim = "nibble"
@@ -1427,6 +1427,11 @@ function start_mouse_nibble()
   mouse.food_dropped =
     spawn_food(pos,
     mouse.flipped)
+ else
+  log("not valid food position",
+    {
+     pos = pos
+    })
  end
 end
 
@@ -1636,8 +1641,8 @@ function gen_mouse_food_path()
    get_food_pos_options()
  local food_pos = rnd(options)
  local dest = {
-  x = flr(food_pos.x / 8),
-  y = flr(food_pos.y / 8)
+  x = food_pos.x,
+  y = food_pos.y
  } 
  log("generating path for " ..
    "mouse to eat food", {
@@ -1908,6 +1913,30 @@ end
 food_current_id = 0
 food_bite_size = .07
 
+function get_food_tile_pos(
+  pixel_pos, flipped)
+ local x = 4
+ if flipped then
+  x -= 1
+ end
+ return {
+  x = (pixel_pos.x - x) / 8,
+  y = (pixel_pos.y - 5) / 8
+ }
+end
+
+function get_food_pixel_pos(
+  tile_pos, flipped)
+ local x = 4
+ if flipped then
+  x -= 1
+ end
+ return {
+  x = tile_pos.x * 8 + x,
+  y = tile_pos.y * 8 + 5
+ }
+end
+
 function get_food_pos_options()
  local pos_options = {}
  for x = 0, 15 do
@@ -1924,16 +1953,16 @@ function get_food_pos_options()
    if sprt_clr == 7 then
     local spot_taken = false
     for food in all(foods) do
-     if food.pos.x == x * 8 + 4
-       and food.pos.y ==
-       y * 8 + 4 then
+     if food.tile_pos.x == x
+       and food.tile_pos.y ==
+       y then
       spot_taken = true
      end
     end
     if not spot_taken then
      add(pos_options, {
-      x = x * 8 + 4,
-      y = y * 8 + 4
+      x = x,
+      y = y
      })
     end
    end
@@ -1954,20 +1983,22 @@ function is_valid_food_pos(pos)
  return false
 end
 
-function spawn_food(pos,
+function spawn_food(tile_pos,
   flipped)
- if not is_valid_food_pos(pos)
-   then
+ if not is_valid_food_pos(
+   tile_pos) then
   log("tried to spawn food " ..
     "at invalid position", {
-     pos = pos
+     tile_pos = tile_pos
     })
   return
  end
 
  local food = {
   id = get_food_id(),
-  pos = pos,
+  pos = get_food_pixel_pos(
+    tile_pos, flipped),
+  tile_pos = tile_pos,
   amount = 1,
   anim_frame = 0,
   flipped = flipped
@@ -1976,6 +2007,7 @@ function spawn_food(pos,
  log("food spawned", {
   id = food.id,
   pos = food.pos,
+  tile_pos = food.tile_pos,
   amount = food.amount
  })
  if count_pairs(foods) >2 then
@@ -2011,6 +2043,7 @@ function bite_food(food)
  log("food bitten", {
   id = food.id,
   pos = food.pos,
+  tile_pos = food.tile_pos,
   old_amount = food.amount,
   new_amount = new_amount
  })
@@ -2022,8 +2055,8 @@ function draw_food(food)
    food.anim_frame *
    food.amount)
  spr(244 + frame,
-   food.pos.x - 4,
-   food.pos.y - 4, 1, 1,
+   food.tile_pos.x * 8,
+   food.tile_pos.y * 8, 1, 1,
    food.flipped)
 end
 -->8
