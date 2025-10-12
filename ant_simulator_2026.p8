@@ -659,7 +659,8 @@ function set_ant_home_dir(ant,
    0 then
   if ant.phrmn_following == nil
     and ant.food_held != nil
-    then
+    and phrmn_angles[
+    ant.food_held] != nil then
    ant.phrmn_following =
      ant.food_held
    log("ant started following "
@@ -691,6 +692,23 @@ function set_ant_home_dir(ant,
   end
   phrmn_angle = phrmn_angles[
     ant.phrmn_following]
+  if phrmn_angle == nil then
+   ant.phrmn_following =
+     rnd_key(phrmn_angles)
+   phrmn_angle = phrmn_angles[
+     ant.phrmn_following]
+   log("ant switched to "
+     .. "different pheromone "
+     .. "trail while "
+     .. "going home", {
+      id = ant.id,
+      pos = ant.pos,
+      dir = ant.dir,
+      food_id = ant.food_held,
+      phrmn_id =
+        ant.phrmn_following
+     })
+  end
  elseif ant.phrmn_following !=
    nil then
   ant.phrmn_following = nil
