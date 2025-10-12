@@ -2080,6 +2080,13 @@ function draw_food(food)
    food.tile_pos.x * 8,
    food.tile_pos.y * 8, 1, 1,
    food.flipped)
+ 
+ if debug then
+  local offset =
+    #tostr(food.id) * 2 - 1
+  print(food.id, food.pos.x -
+    offset, food.pos.y - 7, 10)
+ end
 end
 -->8
 -- pheromones
