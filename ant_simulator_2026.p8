@@ -32,6 +32,8 @@ ant_gather_rate_inc = .08
 ant_gather_rate_dec = .008
 collision_tiles = {}
 blacklight = false
+max_insffcnt_food_time = 5
+insffcnt_food_time = time()
 
 function _init()
  init_menu()
@@ -190,6 +192,10 @@ function update_game()
     end
    end
    deli(foods, i)
+   if count_pairs(foods) < 3
+     then
+    insffcnt_food_time = time()
+   end
   end
  end
 
@@ -1509,7 +1515,9 @@ function set_auto_mouse_dir()
   if mouse.path == nil then
    if mouse.next_action ==
      "enter" and count_foods() <
-     3 then
+     3 and time() -
+     insffcnt_food_time >
+     max_insffcnt_food_time then
     gen_mouse_food_path()
    elseif mouse.next_action ==
      "nibble" then
@@ -1956,6 +1964,9 @@ function spawn_food(pos,
   pos = food.pos,
   amount = food.amount
  })
+ if count_pairs(foods) >2 then
+  insffcnt_food_time = nil
+ end
  return food
 end
 
