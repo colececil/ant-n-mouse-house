@@ -1102,35 +1102,39 @@ function draw_ant(ant)
   draw_sense_area =
     ant.sense_area != nil and
     ant.food_detected == nil
- end
-
- if draw_sense_area then
-  for i = 2,
-    ant_sense_area_vrtcs do
+  if draw_sense_area then
+   for i = 2,
+     ant_sense_area_vrtcs do
+    line(
+     ant.sense_area[i - 1].x,
+     ant.sense_area[i - 1].y,
+     ant.sense_area[i].x,
+     ant.sense_area[i].y,
+     color
+    )
+   end
    line(
-    ant.sense_area[i - 1].x,
-    ant.sense_area[i - 1].y,
-    ant.sense_area[i].x,
-    ant.sense_area[i].y,
+    ant.sense_area[
+      ant_sense_area_vrtcs].x,
+    ant.sense_area[
+      ant_sense_area_vrtcs].y,
+    ant.sense_area[1].x,
+    ant.sense_area[1].y,
     color
-   )
+   ) 
   end
-  line(
-   ant.sense_area[
-     ant_sense_area_vrtcs].x,
-   ant.sense_area[
-     ant_sense_area_vrtcs].y,
-   ant.sense_area[1].x,
-   ant.sense_area[1].y,
-   color
-  )
- else
-  pset(
-  	ant.pos.x,
-  	ant.pos.y,
-   color
-  )
+  
+  local offset =
+    #tostr(ant.id) * 2 - 1
+  print(ant.id, ant.pos.x -
+    offset, ant.pos.y - 2, 3)
  end
+ 
+ pset(
+ 	ant.pos.x,
+ 	ant.pos.y,
+  color
+ )
 end
 -->8
 -- utils
