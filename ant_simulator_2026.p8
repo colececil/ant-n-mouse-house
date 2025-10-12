@@ -363,12 +363,18 @@ function draw_game()
   end
   draw_mouse()
   if blacklight then
-   pal(5, 0)
+   pal(5, 5)
   end
  end
 
  for food in all(foods) do
+  if blacklight then
+   pal(9, 10)
+  end
   draw_food(food)
+  if blacklight then
+   pal(9, 9)
+  end
  end
  
  if mouse.anim == "run_up" or
@@ -378,7 +384,7 @@ function draw_game()
   end
   draw_mouse()
   if blacklight then
-   pal(5, 0)
+   pal(5, 5)
   end
  end
 
