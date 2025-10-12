@@ -1136,11 +1136,13 @@ function draw_ant(ant)
     offset, ant.pos.y - 2, 3)
  end
  
- pset(
- 	ant.pos.x,
- 	ant.pos.y,
-  color
- )
+ if not draw_sense_area then
+  pset(
+  	ant.pos.x,
+  	ant.pos.y,
+   color
+  )
+ end
 end
 -->8
 -- utils
