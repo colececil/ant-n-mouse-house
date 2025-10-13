@@ -405,6 +405,20 @@ function draw_game()
    ant_entry_interval -
    ant_entry_variation *
    ant_gather_rate, 60, 5, 3)
+
+  for ant in all(ants) do
+   local offset =
+     #tostr(ant.id) * 2 - 1
+   print(ant.id, ant.pos.x -
+     offset, ant.pos.y - 2, 3)
+  end
+
+  for food in all(foods) do
+   local offset =
+     #tostr(food.id) * 2 - 1
+   print(food.id, food.pos.x -
+     offset, food.pos.y - 7, 9)
+  end
  end
 end
 
@@ -1129,11 +1143,6 @@ function draw_ant(ant)
     color
    ) 
   end
-  
-  local offset =
-    #tostr(ant.id) * 2 - 1
-  print(ant.id, ant.pos.x -
-    offset, ant.pos.y - 2, 3)
  end
  
  if not draw_sense_area then
@@ -2088,13 +2097,6 @@ function draw_food(food)
    food.tile_pos.x * 8,
    food.tile_pos.y * 8, 1, 1,
    food.flipped)
- 
- if debug then
-  local offset =
-    #tostr(food.id) * 2 - 1
-  print(food.id, food.pos.x -
-    offset, food.pos.y - 7, 10)
- end
 end
 -->8
 -- pheromones
