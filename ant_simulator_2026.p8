@@ -20,6 +20,7 @@ menu_cursor_cycle_time = .8
 
 mouse = nil
 ants = {}
+ant_reactns = {}
 foods = {}
 phrmns = {}
 tv = {}
@@ -134,13 +135,19 @@ function update_menu()
  end
  
  if menu_cursor.active then
-  if btnp(⬆️) then
+  if btnp(⬆️) and
+    selected_mode != "active"
+    then
    selected_mode = "active"
    menu_cursor.elapsed_time = 0
+   sfx(7)
   end
-  if btnp(⬇️) then
+  if btnp(⬇️) and
+    selected_mode != "passive"
+    then
    selected_mode = "passive"
    menu_cursor.elapsed_time = 0
+   sfx(7)
   end
  
   if btnp(❎) then
@@ -151,6 +158,7 @@ function update_menu()
    menu_cursor.active = false
    menu_cursor.elapsed_time = 0
    menu_cursor.submit_time = 0
+   sfx(2)
    
    init_game()
   end
@@ -177,7 +185,7 @@ function update_game()
 
  for i, food in ipairs(foods) do
   if food.amount <= 0 then
-   sfx(2)
+   sfx(8)
    log("food completely eaten",
      {
       id = food.id,
@@ -227,7 +235,6 @@ function update_game()
     ant.home_arrival_time > .75
     then
    if ant.food_held != nil then
-    sfx(5)
     ant_gather_rate +=
       ant_gather_rate_inc
     if ant_gather_rate > 1 then
@@ -252,6 +259,14 @@ function update_game()
    ant_gather_rate_dec * delta_t
  if ant_gather_rate < 0 then
   ant_gather_rate = 0
+ end
+ 
+ for i, reactn in
+   ipairs(ant_reactns) do
+  if ant_reactn_done(reactn)
+    then
+   deli(ant_reactns, i)
+  end
  end
 
  check_mouse_eating()
@@ -397,6 +412,11 @@ function draw_game()
 
  if not mouse_couch_check() then
   draw_map_top()
+ end
+ 
+ for reactn in all(ant_reactns)
+   do
+  draw_ant_reactn(reactn)
  end
  
  draw_faucet_drip()
@@ -1021,6 +1041,13 @@ function ant_detect_food(ant,
    nearest_dist = dist
   end
  end
+ if nearest != nil and
+   nearest.id !=
+   ant.phrmn_following then
+  sfx(9)
+  add(ant_reactns,
+    spawn_ant_reactn(ant))
+ end
  return nearest
 end
 
@@ -1043,7 +1070,6 @@ function ant_try_eating(ant)
     food_pos =
       ant.food_detected.pos
    })
-   sfx(6)
    bite_food(ant.food_detected)
    ant.food_held =
      ant.food_detected.id
@@ -1160,6 +1186,23 @@ function draw_ant(ant)
    color
   )
  end
+end
+
+function spawn_ant_reactn(ant)
+ return {
+  ant = ant,
+  start_time = time()
+ }
+end
+
+function ant_reactn_done(reactn)
+ return time() -
+   reactn.start_time > 1
+end
+
+function draw_ant_reactn(reactn)
+ spr(210, reactn.ant.pos.x,
+   reactn.ant.pos.y - 10)
 end
 -->8
 -- utils
@@ -2757,11 +2800,11 @@ ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777ffffffff88ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777ffffffff88ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777ffffffff8fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-77777777ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+77777777ffffffff8fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 fffffffffffffffffffffffffffffffffffefffffffffffffffffffffffeffffffffffffff5f5fffff5f5fffffffffffffffffffffffffffffffffffffffffff
 ffffffffffffffefffffffeffffffffffffefffffffeffffff5e5ffffffeffffff5f5fffff555fffff555fffff555fffffffffffffffffffffffffffffffffff
 efffffefffff5550ffe55550fee555effffefffffffeffffff555fffff555fffff555fffff555fffff555fffff555fffffffffffffffffffffffffffffffffff
@@ -2945,10 +2988,13 @@ a1d0d0d0d0d0d0d0d0b8b9babbbcbda1ffffffffffffffffffffffffffffffffffffffffffffffff
 a1d0d0d0d0d0d0d0d0d0c9cacbcc96a1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 a1a2a2a2a2a2a2a2a2a2a2a2a2a2a2a1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 __sfx__
-000100000020030250312503125032250322503225032250302502c2502a2502a250002000020000200002000020000200292002a2003e2002f2503325033250332503225033250332502c2502c2502e2502e250
-000100000c2500e25012250152501625016250172501725017250162501425013250102500e2500d2500825002250002500025000200002000020000200002000020000200002000020000200002000020000200
-000100000465012650136500865004650076500f6501165009650036500765006650036500f600006000360008600006000160000600006000060000600006000060000600006000060000600006000060000600
+140100002c55032550395503d5503f5503e5503d5503955035550305502c55027550005000050000500005000050000500005000050000500285502f55032550355503755036550355503255032550365501a500
+900000000b1501115013150131500f15009150081500b1500d1500b15007150001500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000300001b770150700f0701277015770187701c7701f0502303026720297202c7402e06030070320703407035040360103700037000380003800038000390003900039000390003900039000390003900039000
 0001000022650226502e3500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000100002265022650273501630018300153000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 900d00002602322002210000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 900d00002902122000210000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000100002c7602c0702c0702c0202c0002b0002b0002b0002b7002b3002a4002a6002a6002a6002a4002930029700290002900029000290002800028000280002870028300285002750027500275002750027500
+000300003571035010347103472034020357203673036030367303674036040357403474034050347503475035060367603876038070387703877038070387703877038030387103870038000387003870038000
+00010000291002951029510297202973029730290302f030330303503036040370403804038030380203802038010380103801038010380003800038000380003800038000380003800038000380003800038000
