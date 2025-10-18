@@ -1516,7 +1516,8 @@ end
 
 function check_mouse_eating()
  if btnp(❎) and selected_mode
-   == "active" then
+   == "active" and
+   mouse.anim == nil then
   start_mouse_nibble()
  end
 end
@@ -1533,6 +1534,7 @@ function start_mouse_nibble()
     spawn_food(pos,
     mouse.flipped)
  else
+  sfx(10)
   log("not valid food position",
     {
      pos = pos
