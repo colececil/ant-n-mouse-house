@@ -1,3 +1,5 @@
-# Ant Simulator 2026
+# Ant & Mouse House
 
-A PICO-8 game by Cole Cecil
+An ant simulator made in PICO-8 by Cole Cecil.
+
+This project is dedicated to the memory of all the fearless ants who lost their lives upon invading my home. May they rest in peace.
