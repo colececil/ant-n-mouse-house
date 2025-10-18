@@ -1047,8 +1047,8 @@ function ant_detect_food(ant,
   end
  end
  if nearest != nil and
-   nearest.id !=
-   ant.phrmn_following then
+   ant.phrmn_following == nil
+   then
   sfx(9)
   add(ant_reactns,
     spawn_ant_reactn(ant))
