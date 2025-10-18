@@ -191,7 +191,6 @@ function update_game()
 
  for i, food in ipairs(foods) do
   if food.amount <= 0 then
-   sfx(8)
    log("food completely eaten",
      {
       id = food.id,
